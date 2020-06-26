@@ -5,3 +5,5 @@ LICENSE
 ^appveyor\.yml$
 ^Makefile$
 
+^.*\.Rproj$
+^\.Rproj\.user$
