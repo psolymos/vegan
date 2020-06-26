@@ -69,7 +69,7 @@
         x <- coverscale(x, scale, ...)
     usedscale <- attr(x, "scale")
     if (any(apply(x, 1, nchar) > 1))
-        stop("Cowardly refusing to use longer than 1 char symbols:\nUse scale")
+        stop("cowardly refusing to use longer than one-character symbols:\nUse scale")
     x <- as.matrix(x)
     x <- t(x)
     sp.nam <- rownames(x)
@@ -104,8 +104,8 @@
         dimnames(tbl) <- d
         print(noquote(tbl))
     }
-    out <- list(sites = site.ind, species = sp.ind)
-    print(sapply(out, length))
+    out <- list(sites = site.ind, species = sp.ind, table = tbl)
+    cat(length(out$sites), "sites,", length(out$species), "species\n")
     if (!is.null(usedscale))
         cat("scale: ",  usedscale, "\n")
     invisible(out)

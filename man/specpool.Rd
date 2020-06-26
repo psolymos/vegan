@@ -121,18 +121,17 @@ estaccumR(x, permutations = 100, parallel = getOption("mc.cores"))
     the number 
     of individuals in rare species.
 
-    Functions estimate the standard errors of the estimates. These
-    only concern the number of added species, and assume that there is
-    no variance in the observed richness.  The equations of standard
-    errors are too complicated to be reproduced in this help page, but
-    they can be studied in the \R source code of the function and are
-    discussed in the \code{\link{vignette}} \dQuote{diversity-vegan}
-    that can be read with the \code{\link{vegandocs}} command. The
-    standard error are based on the following sources: Chiu et
-    al. (2014) for the Chao estimates and Smith and van Belle (1984)
-    for the first-order Jackknife and the bootstrap (second-order
-    jackknife is still missing).  For the variance estimator of
-    \eqn{S_{ace}}{S_ace} see O'Hara (2005).
+    Functions estimate the standard errors of the estimates. These only
+    concern the number of added species, and assume that there is no
+    variance in the observed richness.  The equations of standard errors
+    are too complicated to be reproduced in this help page, but they can
+    be studied in the \R source code of the function and are discussed
+    in the \code{\link{vignette}} that can be read with the
+    \code{browseVignettes("vegan")}. The standard error are based on the
+    following sources: Chiu et al. (2014) for the Chao estimates and
+    Smith and van Belle (1984) for the first-order Jackknife and the
+    bootstrap (second-order jackknife is still missing).  For the
+    variance estimator of \eqn{S_{ace}}{S_ace} see O'Hara (2005).
 
   Functions \code{poolaccum} and \code{estaccumR} are similar to
   \code{\link{specaccum}}, but estimate extrapolated richness indices
@@ -208,14 +207,13 @@ estaccumR(x, permutations = 100, parallel = getOption("mc.cores"))
 \examples{
 data(dune)
 data(dune.env)
-attach(dune.env)
-pool <- specpool(dune, Management)
+pool <- with(dune.env, specpool(dune, Management))
 pool
 op <- par(mfrow=c(1,2))
-boxplot(specnumber(dune) ~ Management, col="hotpink", border="cyan3",
- notch=TRUE)
-boxplot(specnumber(dune)/specpool2vect(pool) ~ Management, col="hotpink",
- border="cyan3", notch=TRUE)
+boxplot(specnumber(dune) ~ Management, data = dune.env,
+        col = "hotpink", border = "cyan3")
+boxplot(specnumber(dune)/specpool2vect(pool) ~ Management,
+        data = dune.env, col = "hotpink", border = "cyan3")
 par(op)
 data(BCI)
 ## Accumulation model

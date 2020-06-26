@@ -17,8 +17,10 @@
 orditkplot(x, display = "species", choices = 1:2, width, xlim, ylim, 
    tcex = 0.8, tcol, pch = 1,  pcol, pbg, pcex = 0.7, labels,  ...)
 \method{plot}{orditkplot}(x, ...)
-\method{points}{orditkplot}(x, ...)
-\method{text}{orditkplot}(x, ...)
+\method{points}{orditkplot}(x, pch = x$args$pch, cex = x$args$pcex,
+       col = x$args$pcol, bg = x$args$pbg, ...)
+\method{text}{orditkplot}(x, cex = x$args$tcex, col = x$args$tcol,
+     font = attr(x$labels, "font"), ...)
 \method{scores}{orditkplot}(x, display, ...)
 }
 
@@ -39,10 +41,12 @@ orditkplot(x, display = "species", choices = 1:2, width, xlim, ylim,
   \item{tcol}{Colour of text labels.}
   \item{pch, pcol, pbg}{Point type and outline and fill colours. 
     Defaults \code{pcol="black"}  and \code{pbg="transparent"}. 
-   Argument \code{pbg} has an effect
-    only in filled plotting characters \code{pch = 21} to \code{25}.  } 
+    Argument \code{pbg} has an effect only in filled plotting characters
+    \code{pch = 21} to \code{25}.} 
   \item{pcex}{Expansion factor for point size.}  
   \item{labels}{Labels used instead of row names.}
+  \item{cex, col, bg, font}{graphical parameters used in the
+    \code{points} and \code{text} methods. See \code{\link{par}}.}
   \item{\dots}{Other arguments passed to the function. These can be
     graphical parameters (see \code{\link{par}}) used in the plot, or
     extra arguments to \code{\link{scores}}. These arguments are
@@ -78,17 +82,17 @@ orditkplot(x, display = "species", choices = 1:2, width, xlim, ylim,
   formats may be available: eps, pdf, svg, png, jpeg, tiff, bmp or
   xfig. Some of the output formats may be edited with external
   software: svg files with Illustrator or Inkscape, and xfig with the
-  legacy program XFig. Button \strong{Dump to R} writes the edited
+  legacy program XFig. Button \strong{Save to R} writes the edited
   coordinates of labels and points to the \R session for further
   processing, and the \code{plot.orditkplot} function can be used to
   display the results. For faithful replication of the plot, the graph
   must have similar dimensions as the \code{orditkplot} canvas had
   originally. The \code{plot} function cannot be configured, but it
   uses the same settings as the original Tcl/Tk plot. However,
-  \code{points} and \code{text} functions are fully configurable, and
-  unaware of the original Tcl/Tk plot settings (probably you must set
-  \code{cex} at least to get a decent plot). Finally, button
-  \strong{Dismiss} closes the window.
+  \code{points} and \code{text} functions are fully configurable, but
+  use the stored defaults for consistency with \code{plot.orditkplot}
+  if none are supplied. Finally, button \strong{Close} closes the
+  window.
 
   The produced plot will have equal aspect ratio. The width of the
   horizontal axis is fixed, but vertical axes will be scaled to needed
@@ -100,9 +104,11 @@ orditkplot(x, display = "species", choices = 1:2, width, xlim, ylim,
   The function only displays one set of scores. However, you can use
   \code{\link{ordipointlabel}} to produce a result object that has
   different points and text types for several sets of scores and this
-  can further edited with \code{orditkplot}. For a good starting
-  solution you need to scale the \code{\link{ordipointlabel}} result so
-  that the points span over the whole horizontal axis.
+  can be further edited with \code{orditkplot}. For a good starting
+  solution you need to scale the \code{\link{ordipointlabel}} result
+  so that the points span over the whole horizontal axis. The function
+  cannot show environmental variables or constraints, but it is
+  limited to unconstrained ordination.
 
   The plot is a Tcl/Tk canvas, but the function tries to replicate
   standard graphical device of the platform, and it honours several
@@ -126,26 +132,29 @@ orditkplot(x, display = "species", choices = 1:2, width, xlim, ylim,
   \code{plot.orditkplot}.  }
 
 \value{ Function returns nothing useful directly, but you can save the
-  edited graph to a file or dump the edited positions to an \R session
+  edited graph to a file or save the edited positions to an \R session
   for further processing and plotting.  
 }
 
 \author{ Jari Oksanen }
 \note{
   You need \pkg{tcltk} package and \R must have been configured with
-  \code{\link{capabilities}} for \code{tcltk} when building the binary.
+  \code{\link{capabilities}} for \code{tcltk}.
   Depending on your OS, you may need to start X11 and set the display
   before loading \pkg{tcltk} and starting the function (for instance,
   with \code{Sys.setenv("DISPLAY"=":0")}). See
   \code{\link[tcltk]{tcltk-package}}. 
 
 }
+
 \seealso{ Function \code{\link{ordipointlabel}} is an automatic
-  procedure with similar goals of avoiding overplotting. 	   
-  See \code{\link{ordiplot}}, \code{\link{plot.cca}},
-  \code{\link[vegan3d]{ordirgl}} and \code{\link{orditorp}} for alternative
-  ordination plots, and \code{\link{scores}} for extracting ordination
-  scores.  }
+  procedure with similar goals of avoiding overplotting, and its
+  output can be edited with \code{orditkplot}.  See
+  \code{\link{ordiplot}}, \code{\link{plot.cca}},
+  \code{\link[vegan3d]{ordirgl}} and \code{\link{orditorp}} for
+  alternative ordination plots, and \code{\link{scores}} for
+  extracting ordination scores.  }
+
 \examples{
 ## The example needs user interaction and is not executed directly.
 ## It should work when pasted to the window.

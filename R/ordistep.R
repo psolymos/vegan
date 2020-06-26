@@ -5,6 +5,8 @@
 {
     if (!inherits(object, "cca"))
         stop("function can be only used with 'cca' and related objects")
+    if (is.null(object$terms))
+        stop("ordination model must be fitted using formula")
     ## handling 'direction' and 'scope' directly copied from
     ## stats::step()
     md <- missing(direction)
@@ -15,21 +17,24 @@
     if (missing(scope)) {
         fdrop <- numeric(0)
         fadd <- ffac
-        if (md) 
+        if (md)
             forward <- FALSE
     }
     else {
-        if (is.list(scope)) {
-            fdrop <- if (!is.null(fdrop <- scope$lower)) 
+        if (is.list(scope) && (!is.null(scope$lower) || !is.null(scope$upper))) {
+            fdrop <- if (!is.null(fdrop <- scope$lower))
                 attr(terms(update.formula(object, fdrop)), "factors")
             else numeric(0)
-            fadd <- if (!is.null(fadd <- scope$upper)) 
+            fadd <- if (!is.null(fadd <- scope$upper))
                 attr(terms(update.formula(object, fadd)), "factors")
         }
         else {
-            fadd <- if (!is.null(fadd <- scope)) 
-                attr(terms(update.formula(object, scope)), "factors")
-            fdrop <- numeric(0L)
+            fadd <- if (!is.null(fadd <- scope))
+                        attr(terms(update.formula(object, scope)), "factors")
+            if (forward)
+                fdrop <- attr(terms(object), "factor")
+            else
+                fdrop <- numeric(0L)
         }
     }
     scope <- factor.scope(ffac, list(add = fadd, drop = fdrop))
@@ -95,7 +100,8 @@
         if (is.null(change))
             break
     }
-    cat("\n")
+    if (trace)
+        cat("\n")
     object$anova <- anotab
     object
 }

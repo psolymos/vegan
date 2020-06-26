@@ -56,7 +56,7 @@
     if (missing(xlim)) {
         xlim <- range(g$species[, 1], g$sites[, 1], g$constraints[, 1],
                       g$biplot[, 1],
-                      if (length(g$centroids) > 0 && is.na(g$centroids)) NA else g$centroids[, 1],
+                      if (length(g$centroids) > 0 && all(is.na(g$centroids))) NA else g$centroids[, 1],
                       g$default[, 1],
                       na.rm = TRUE)
     }
@@ -65,7 +65,7 @@
     if (missing(ylim)) {
         ylim <- range(g$species[, 2], g$sites[, 2], g$constraints[, 2],
                       g$biplot[, 2],
-                      if (length(g$centroids) > 0 && is.na(g$centroids)) NA else g$centroids[, 2],
+                      if (length(g$centroids) > 0 && all(is.na(g$centroids))) NA else g$centroids[, 2],
                       g$default[, 2],
                       na.rm = TRUE)
     }
@@ -103,10 +103,20 @@
                length = 0.05, col = "blue")
         biplabs <- ordiArrowTextXY(mul * g$biplot, rownames(g$biplot))
         text(biplabs, rownames(g$biplot), col = "blue")
-        axis(3, at = c(-mul, 0, mul), labels = rep("", 3), col = "blue")
-        axis(4, at = c(-mul, 0, mul), labels = c(-1, 0, 1), col = "blue")
     }
-    if (!is.null(g$centroids) && !is.na(g$centroids) && type !=
+    if (!is.null(g$regression) && nrow(g$regression > 0) && type != "none") {
+        rcol <- "purple4"
+        if (length(display) > 1) {
+            mul <- ordiArrowMul(g$regression)
+        }
+        else mul <- 1
+        attr(g$regression, "arrow.mul") <- mul
+        arrows(0, 0, mul * g$regression[, 1], mul * g$regression[, 2],
+               length = 0.05, col = rcol)
+        biplabs <- ordiArrowTextXY(mul * g$regression, rownames(g$regression))
+        text(biplabs, rownames(g$regression), col = rcol)
+    }
+    if (!is.null(g$centroids) && all(!is.na(g$centroids)) && type !=
         "none") {
         if (type == "text")
             text(g$centroids, rownames(g$centroids), col = "blue")
@@ -121,4 +131,17 @@
     }
     class(g) <- "ordiplot"
     invisible(g)
+}
+
+## vegan::plot.rda needed because klaR::plot.rda would be used
+## instead if klaR package is loaded
+
+`plot.rda`<-
+    function(x, ...)
+{
+    ## not vegan rda?
+    if (!("CA" %in% names(x)))
+        stop(gettextf("%s is not a vegan rda object",
+                      sQuote(deparse(substitute(x)))))
+    NextMethod("plot", x, ...)
 }

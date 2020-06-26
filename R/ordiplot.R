@@ -7,13 +7,12 @@
                             panel.last, axes) points(...)
     localText <- function(..., log, frame.plot, panel.first,
                           panel.last, axes) text(...)
-    if (!is.null(attr(ord, "class")) && (class(ord) == "decorana" ||
-                                         any(class(ord) == "cca"))) {
+    if (inherits(ord, "decorana") || inherits(ord, "cca")) {
         if (missing(display))
-            out <- plot(ord, choices, type = type, xlim = xlim,
-                        ylim = ylim, ...)
-        else out <- plot(ord, choices, type = type, display = display,
-                         xlim = xlim, ylim = ylim, ...)
+            out <- plot(ord, choices = choices, type = type, xlim = xlim,
+                        ylim = ylim, cex = cex, ...)
+        else out <- plot(ord, choices = choices, type = type, display = display,
+                         xlim = xlim, ylim = ylim, cex = cex, ...)
     }
     else {
         type <- match.arg(type, c("points", "text", "none"))
@@ -32,21 +31,21 @@
             Y <- try(scores(ord, choices = choices, display = "species"))
             options(show.error.messages = TRUE)
             if (inherits(Y, "try-error")) {
-                warning("Species scores not available")
+                message("species scores not available")
                 Y <- NULL
             }
             else if (!is.null(X) && NROW(X) == NROW(Y) &&
                      isTRUE(all.equal.numeric(X, Y,
                                               check.attributes = FALSE))) {
                 Y <- NULL
-                warning("Species scores not available")
+                message("species scores not available")
             }
         }
         ## Use linestack and exit if there is only one variable
         if (NCOL(X) == 1 && NCOL(Y) == 1) {
-            pl <- linestack(X, ylim = range(c(X,Y), na.rm=TRUE), ...)
+            pl <- linestack(X, ylim = range(c(X,Y), na.rm=TRUE), cex = cex, ...)
             if (!is.null(Y))
-                linestack(Y, side = "left", add = TRUE, ...)
+                linestack(Y, side = "left", add = TRUE, cex = cex, ...)
             return(invisible(pl))
         }
         tmp <- apply(rbind(X, Y), 2, range, na.rm=TRUE)

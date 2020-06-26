@@ -13,8 +13,8 @@
 #'
 #' @author Jari Oksanen
 `ordiareatest` <-
-    function(ord, groups, area = c("hull", "ellipse"), permutations = 999,
-             parallel = getOption("mc.cores"), ...)
+    function(ord, groups, area = c("hull", "ellipse"), kind = "sd",
+             permutations = 999, parallel = getOption("mc.cores"), ...)
 {
     EPS <- sqrt(.Machine$double.eps)
     ## Function to find area
@@ -22,10 +22,10 @@
     areafun <- if (area == "hull") ordihull else ordiellipse
     areafun <- match.fun(areafun)
     ## Observed statistics
-    obs <- summary(areafun(ord, groups, draw = "none", ...))["Area",]
+    obs <- summary(areafun(ord, groups, draw = "none", kind = kind))["Area",]
     ## permutations
     pfun <- function(take, ...)
-        summary(areafun(ord, groups[take], draw = "none", ...))["Area",]
+        summary(areafun(ord, groups[take], draw = "none", kind = kind))["Area",]
     perm <- getPermuteMatrix(permutations, length(groups))
     nperm <- nrow(perm)
     if (is.null(parallel))
@@ -63,7 +63,7 @@
     qu <- apply(x$permutations, 1, quantile, probs=c(0.05, 0.5))
     m <- cbind("Area" = x$areas, t(qu), "Pr(<sim)" = x$pvalues)
     cat("\n")
-    cat(gettextf("Permutation test for the size of ordination %ss\nAlternative hypothesis: observed area is smaller than random %s\n\n", x$kind, x$kind))
+    cat(sprintf("Permutation test for the size of ordination %s\nalternative hypothesis: observed area is smaller than random %s\n\n", x$kind, x$kind))
     cat(howHead(x$control), "\n")
     printCoefmat(m, tst.ind=1:3)
     invisible(x)

@@ -3,13 +3,13 @@
 ### label these heads, '...' passes arguments (such as 'cex') to
 ### strwidth() and strheight().
 `ordiArrowTextXY` <- function (x, labels, display, choices = c(1,2),
-                               rescale = TRUE, fill = 0.75, ...) {
+                               rescale = TRUE, fill = 0.75, at = c(0,0), ...) {
     ## handle x, which we try with scores, but also retain past usage of
     ## a two column matrix
     X <- if (is.matrix(x)) {
         nc <- NCOL(x)
         if (nc != 2L) {
-            stop("A 2-column matrix of coordinates is required & not supplied.")
+            stop("a two-column matrix of coordinates is required")
         }
         x
     } else {
@@ -19,13 +19,13 @@
             scores(x, display = display, choices = choices, ...)
         }
         if (!rescale) {
-            warning("Extracted scores usually need rescaling but you set 'rescale = FALSE'.\nConsider using 'rescale = TRUE', the default.")
+            warning("extracted scores usually need rescaling but you set 'rescale = FALSE' - \nconsider using 'rescale = TRUE', the default")
         }
     }
 
     ## find multiplier to fill if rescaling
     if (rescale) {
-        mul <- ordiArrowMul(X, fill = fill)
+        mul <- ordiArrowMul(X, fill = fill, at = at)
         X <- X * mul
     }
 
@@ -42,10 +42,11 @@
     h <- strheight(labels, ...)
 
     ## slope of arrows
-    b <- X[,2] / X[,1]
+    b <- (X[,2] - at[2]) / (X[,1] - at[1])
 
     ## offset based on string dimensions
-    off <- cbind(sign(X[,1]) * (w/2 + h/4), 0.75 * h * sign(X[,2]))
+    off <- cbind(sign(X[,1] - at[1]) * (w/2 + h/4),
+                 0.75 * h * sign(X[,2] - at[2]))
 
     ## move the centre of the string to the continuation of the arrow
     for(i in seq_len(nrow(X))) {

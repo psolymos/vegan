@@ -1,5 +1,5 @@
 \name{vegan-internal}
-\alias{ordiGetData}
+\alias{vegan-internal}
 \alias{ordiParseFormula}
 \alias{ordiNAexclude}
 \alias{ordiNApredict}
@@ -23,9 +23,8 @@
   but only within other functions.
 }
 \usage{
-ordiGetData(call, env)
 ordiParseFormula(formula, data, xlev = NULL,  na.action = na.fail,
-    subset = NULL)
+    subset = NULL, X)
 ordiTerminfo(d, data)
 ordiNAexclude(x, excluded)
 ordiNApredict(omit, x)
@@ -36,7 +35,7 @@ getPermuteMatrix(perm, N, strata = NULL)
 howHead(x, ...)
 pasteCall(call, prefix = "Call:")
 veganCovEllipse(cov, center = c(0, 0), scale = 1, npoints = 100)
-veganMahatrans(x, s2, tol = 1e-8)
+veganMahatrans(x, s2, tol = sqrt(.Machine$double.eps))
 hierParseFormula(formula, data)
 GowerDblcen(x, na.rm = TRUE)
 addLingoes(d)
@@ -50,20 +49,20 @@ addCailliez(d)
   \code{\link{get}} or \code{\link{:::}} to directly call these
   functions.
   
-  \code{ordiGetData} finds the model frame of constraints and
-  conditions in constrained ordination in the defined
-  \code{env}ironment.  \code{ordiParseFormula} returns a list of three
-  matrices (dependent variables, and \code{\link{model.matrix}} of
-  constraints and conditions, possibly \code{NULL}) needed in
-  constrained ordination. Argument \code{xlev} is passed to
-  \code{\link{model.frame}}. \code{ordiTermInfo} finds the term
+  \code{ordiParseFormula} returns a list of three matrices (dependent
+  variables, and \code{\link{model.matrix}} of constraints and
+  conditions, possibly \code{NULL}) needed in constrained
+  ordination. Argument \code{xlev} is passed to
+  \code{\link{model.frame}}. If the left-hand-side was already
+  evaluated in calling code, it can be given as argument \code{X} and
+  will not be re-evaluated. \code{ordiTermInfo} finds the term
   information for constrained ordination as described in
   \code{\link{cca.object}}. \code{ordiNAexclude} implements
   \code{na.action = na.exclude} for constrained ordination finding WA
   scores of CCA components and site scores of unconstrained component
   from \code{excluded} rows of observations. Function
-  \code{ordiNApredict} pads the result object with these or with
-  WA scores similarly as \code{\link{napredict}}.
+  \code{ordiNApredict} pads the result object with these or with WA
+  scores similarly as \code{\link{napredict}}.
 
   \code{ordiArgAbsorber} absorbs arguments of \code{\link{scores}}
   function of \pkg{vegan} so that these do not cause superfluous
@@ -78,8 +77,7 @@ addCailliez(d)
   a permutation. The input \code{perm} can be a single number for the
   number of simple permutations, a result of
   \code{\link[permute]{how}} defining a permutation scheme or a
-  permutation matrix. Function \code{permuted.index} was used earlier
-  to generate permutations, but it is now deprecated.
+  permutation matrix.
 
   \code{howHead} formats the permutation scheme of
   \code{\link[permute]{how}} for display. The formatting is more

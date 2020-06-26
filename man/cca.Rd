@@ -19,9 +19,9 @@
 \usage{
 \method{cca}{formula}(formula, data, na.action = na.fail, subset = NULL,
   ...)
-\method{cca}{default}(X, Y, Z, ...)
 \method{rda}{formula}(formula, data, scale=FALSE, na.action = na.fail,
   subset = NULL, ...)
+\method{cca}{default}(X, Y, Z, ...)
 \method{rda}{default}(X, Y, Z, scale=FALSE, ...)
 }
 
@@ -34,10 +34,16 @@
     of the model formula.}
   \item{X}{ Community data matrix. }
   \item{Y}{ Constraining matrix, typically of environmental variables.
-    Can be missing. }
+    Can be missing. If this is a \code{data.frame}, it will be
+    expanded to a \code{\link{model.matrix}} where factors are
+    expanded to contrasts (\dQuote{dummy variables}). It is better to
+    use \code{formula} instead of this argument, and some further
+    analyses only work when \code{formula} was used.}
   \item{Z}{ Conditioning matrix, the effect of which is removed
-    (`partialled out') before next step. Can be missing.}
-  \item{scale}{Scale species to unit variance (like correlations).}
+    (\dQuote{partialled out}) before next step. Can be missing. If this is a
+    \code{data.frame}, it is expanded similarly as constraining
+    matrix.}
+\item{scale}{Scale species to unit variance (like correlations).}
   \item{na.action}{Handling of missing values in constraints or
     conditions. The default (\code{\link{na.fail}}) is to stop with
     missing value. Choice \code{\link{na.omit}} removes all rows with
@@ -70,10 +76,13 @@
   algorithm of \pkg{vegan}. The algorithm of CCA is similar, but
   involves standardization by row and column weights.
 
-  The functions can be called either with matrix-like entries for community
-  data and constraints, or with formula interface.  In general, the
-  formula interface is preferred, because it allows a better control of
-  the model and allows factor constraints.
+  The functions can be called either with matrix-like entries for
+  community data and constraints, or with formula interface.  In
+  general, the formula interface is preferred, because it allows a
+  better control of the model and allows factor constraints. Some
+  analyses of ordination results are only possible if model was fitted
+  with formula (e.g., most cases of \code{\link{anova.cca}}, automatic
+  model building).
 
   In the following sections, \code{X}, \code{Y} and \code{Z}, although
   referred to as matrices, are more commonly data frames.
@@ -83,7 +92,7 @@
   matrices may be omitted, and the corresponding stage of analysis is
   skipped.  If matrix \code{Z} is supplied, its effects are removed from
   the community matrix, and the residual matrix is submitted to the next
-  stage.  This is called `partial' correspondence or redundancy
+  stage.  This is called partial correspondence or redundancy
   analysis.  If matrix
   \code{Y} is supplied, it is used to constrain the ordination,
   resulting in constrained or canonical correspondence analysis, or
@@ -104,7 +113,7 @@
   variables.  The constraints can also be matrices (but not data
   frames).
   The formula can include a special term \code{Condition}
-  for conditioning variables (``covariables'') ``partialled out'' before
+  for conditioning variables (\dQuote{covariables}) partialled out before
   analysis.  So the following commands are equivalent:
   \code{cca(X, Y, Z)},  \code{cca(X ~ Y + Condition(Z))}, where \code{Y}
   and \code{Z} refer to constraints and conditions matrices respectively.
@@ -145,16 +154,16 @@
   
   Partial CCA (pCCA; or alternatively partial RDA) can be used to remove
   the effect of some
-  conditioning or ``background'' or ``random'' variables or
-  ``covariables'' before CCA proper.  In fact, pCCA compares models
+  conditioning or background or random variables or
+  covariables before CCA proper.  In fact, pCCA compares models
   \code{cca(X ~ Z)} and \code{cca(X ~ Y + Z)} and attributes their
   difference to the effect of \code{Y} cleansed of the effect of
   \code{Z}.  Some people have used the method for extracting
-  ``components of variance'' in CCA.  However, if the effect of
+  \dQuote{components of variance} in CCA.  However, if the effect of
   variables together is stronger than sum of both separately, this can
-  increase total Chi-square after ``partialling out'' some
-  variation, and give negative ``components of variance''.  In general,
-  such components of ``variance'' are not to be trusted due to
+  increase total Chi-square after partialling out some
+  variation, and give negative \dQuote{components of variance}.  In general,
+  such components of \dQuote{variance} are not to be trusted due to
   interactions between two sets of variables.
   
   The functions have \code{summary} and \code{plot} methods which are
@@ -243,11 +252,11 @@
   several components (\code{\link{varpart}}).
 
   Design decisions are explained in \code{\link{vignette}}
-  \file{decision-vegan} which also can be accessed with
-  \code{\link{vegandocs}}.
+  on \dQuote{Design decisions} which can be accessed with
+  \code{browseVignettes("vegan")}.
 
   Package \pkg{ade4} provides alternative constrained ordination
-  functions \code{\link[ade4]{cca}} and \code{\link[ade4]{pcaiv}}.
+  function \code{\link[ade4]{pcaiv}}.
 
 }
 
@@ -263,7 +272,7 @@ plot(vare.cca)
 vare.cca <- cca(varespec ~ Al + P*(K + Baresoil), data=varechem)
 vare.cca
 plot(vare.cca)
-## `Partialling out' and `negative components of variance'
+## Partialling out and negative components of variance
 cca(varespec ~ Ca, varechem)
 cca(varespec ~ Ca + Condition(pH), varechem)
 ## RDA
@@ -271,10 +280,6 @@ data(dune)
 data(dune.env)
 dune.Manure <- rda(dune ~ Manure, dune.env)
 plot(dune.Manure) 
-## For further documentation:
-\dontrun{
-vegandocs("decision")
-}
 }
 \keyword{ multivariate }
 

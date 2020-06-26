@@ -1,12 +1,21 @@
 `spantree` <-
-    function (d, toolong = 0) 
+    function (d, toolong = 0)
 {
-    dis <- as.dist(d)
-    n <- attr(dis, "Size")
-    labels <- labels(dis)
-    dis <- .C("primtree", dist = as.double(dis), toolong = as.double(toolong), 
+    if (!inherits(d, "dist")) {
+        if ((is.matrix(d) || is.data.frame(d)) &&
+            isSymmetric(unname(as.matrix(d)))) {
+            d <- as.dist(d)
+        } else {
+            stop("input must be dissimilarities")
+        }
+    }
+    if (!is.numeric(d))
+        stop("input data must be numeric")
+    n <- attr(d, "Size")
+    labels <- labels(d)
+    dis <- .C(primtree, dist = as.double(d), toolong = as.double(toolong),
               n = as.integer(n), val = double(n + 1),
-              dad = integer(n + 1), NAOK = TRUE, PACKAGE = "vegan")
+              dad = integer(n + 1), NAOK = TRUE)
     out <- list(kid = dis$dad[2:n] + 1, dist = dis$val[2:n],
                 labels = labels, n = n, call = match.call())
     class(out) <- "spantree"

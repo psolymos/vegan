@@ -9,15 +9,26 @@
 \alias{labels.envfit}
 
 \title{Fits an Environmental Vector or Factor onto an Ordination }
+
 \description{
+
   The function fits environmental vectors or factors onto an
-  ordination. The projections of points onto vectors have
-  maximum correlation with corresponding environmental variables, and
-  the factors show the averages of factor levels.
+  ordination. The projections of points onto vectors have maximum
+  correlation with corresponding environmental variables, and the
+  factors show the averages of factor levels. For continuous varaibles
+  this is equal to fitting a linear trend surface (plane in 2D) for a
+  variable (see \code{\link{ordisurf}}); this trend surface can be
+  presented by showing its gradient (direction of steepest increase)
+  using an arrow. The environmental variables are the dependent
+  variables that are explained by the ordination scores, and each
+  dependent variable is analysed separately.
+
 }
+
 \usage{
 \method{envfit}{default}(ord, env, permutations = 999, strata = NULL, 
-   choices=c(1,2),  display = "sites", w  = weights(ord), na.rm = FALSE, ...)
+   choices=c(1,2),  display = "sites", w  = weights(ord, display),
+   na.rm = FALSE, ...)
 \method{envfit}{formula}(formula, data, ...)
 \method{plot}{envfit}(x, choices = c(1,2), labels, arrow.mul, at = c(0,0), 
    axis = FALSE, p.max = NULL, col = "blue", bg, add = TRUE, ...)
@@ -106,7 +117,16 @@ factorfit(X, P, permutations = 0, strata = NULL, w, ...)
   side lists the environmental variables. The formula interface can be
   used for easier selection and/or transformation of environmental
   variables. Only the main effects will be analysed even if interaction
-  terms were defined in the formula. 
+  terms were defined in the formula.
+
+  The ordination results are extracted with \code{\link{scores}} and
+  all extra arguments are passed to the \code{scores}. The fitted
+  models only apply to the results defined when extracting the scores
+  when using \code{envfit}. For instance, \code{scaling} in
+  constrained ordination (see \code{\link{scores.rda}},
+  \code{\link{scores.cca}}) must be set in the same way in
+  \code{envfit} and in the \code{plot} or the ordination results (see
+  Examples).
 
   The printed output of continuous variables (vectors) gives the
   direction cosines which are the coordinates of the heads of unit
@@ -129,7 +149,7 @@ factorfit(X, P, permutations = 0, strata = NULL, w, ...)
   scores for factor levels. Function \code{factorfit} treats ordered
   and unordered factors similarly.
 
-  If \code{permutations} \eqn{> 0}, the `significance' of fitted vectors
+  If \code{permutations} \eqn{> 0}, the significance of fitted vectors
   or factors is assessed using permutation of environmental variables.
   The goodness of fit statistic is squared correlation coefficient
   (\eqn{r^2}).
@@ -138,17 +158,16 @@ factorfit(X, P, permutations = 0, strata = NULL, w, ...)
   squares. See \code{\link{permutations}} for additional details on
   permutation tests in Vegan.
 
-  User can supply a vector of prior  weights \code{w}. If the ordination
+  User can supply a vector of prior weights \code{w}. If the ordination
   object has weights, these will be used. In practise this means that
-  the row totals are used as weights with
-  \code{\link{cca}} or \code{\link{decorana}} results. If you do not
-  like this, but want to give 
-  equal weights to all sites, you should set \code{w = NULL}.
-  The weighted fitting gives similar results to biplot
-  arrows and class centroids in \code{\link{cca}}.
-  For complete
-  similarity between fitted vectors and biplot arrows, you should set
-  \code{display = "lc"} (and possibly \code{scaling = 2}).
+  the row totals are used as weights with \code{\link{cca}} or
+  \code{\link{decorana}} results. If you do not like this, but want to
+  give equal weights to all sites, you should set \code{w = NULL}.  The
+  fitted vectors are similar to biplot arrows in constrained ordination
+  only when fitted to LC scores (\code{display = "lc"}) and you set
+  \code{scaling = "species"} (see \code{\link{scores.cca}}).  The
+  weighted fitting gives similar results to biplot arrows and class
+  centroids in \code{\link{cca}}.
 
   The lengths of arrows for fitted vectors are automatically adjusted
   for the physical size of the plot, and the arrow lengths cannot be
@@ -204,8 +223,7 @@ factorfit(X, P, permutations = 0, strata = NULL, w, ...)
   }
 
 \examples{
-data(varespec)
-data(varechem)
+data(varespec, varechem)
 library(MASS)
 ord <- metaMDS(varespec)
 (fit <- envfit(ord, varechem, perm = 999))
@@ -219,26 +237,29 @@ ord <- cca(varespec ~ Al + P + K, varechem)
 plot(ord, type="p")
 fit <- envfit(ord, varechem, perm = 999, display = "lc")
 plot(fit, p.max = 0.05, col = "red")
+## 'scaling' must be set similarly in envfit and in ordination plot
+plot(ord, type = "p", scaling = "sites")
+fit <- envfit(ord, varechem, perm = 0, display = "lc", scaling = "sites")
+plot(fit, col = "red")
 
 ## Class variables, formula interface, and displaying the
-## inter-class variability with `ordispider', and semitransparent
+## inter-class variability with ordispider, and semitransparent
 ## white background for labels (semitransparent colours are not
 ## supported by all graphics devices)
 data(dune)
 data(dune.env)
-attach(dune.env)
 ord <- cca(dune)
 fit <- envfit(ord ~ Moisture + A1, dune.env, perm = 0)
 plot(ord, type = "n")
-ordispider(ord, Moisture, col="skyblue")
-points(ord, display = "sites", col = as.numeric(Moisture), pch=16)
+with(dune.env, ordispider(ord, Moisture, col="skyblue"))
+with(dune.env, points(ord, display = "sites", col = as.numeric(Moisture),
+                      pch=16))
 plot(fit, cex=1.2, axis=TRUE, bg = rgb(1, 1, 1, 0.5))
 ## Use shorter labels for factor centroids
 labels(fit)
 plot(ord)
 plot(fit, labels=list(factors = paste("M", c(1,2,4,5), sep = "")),
    bg = rgb(1,1,0,0.5))
-detach(dune.env)
 }
 \keyword{multivariate }
 \keyword{aplot}

@@ -1,3 +1,6 @@
+### extract scores from rda, capscale and dbrda results. The two
+### latter can have special features which are commented below. cca
+### results are handled by scores.cca.
 `scores.rda` <-
     function (x, choices = c(1, 2), display = c("sp", "wa", "cn"),
               scaling = "species", const, correlation = FALSE, ...)
@@ -6,13 +9,13 @@
     ## "exclude"
     if (!is.null(x$na.action) && inherits(x$na.action, "exclude"))
         x <- ordiNApredict(x$na.action, x)
-    tabula <- c("species", "sites", "constraints", "biplot", 
-                "centroids")
-    names(tabula) <- c("sp", "wa", "lc", "bp", "cn")
-    if (is.null(x$CCA)) 
+    tabula <- c("species", "sites", "constraints", "biplot",
+                "regression", "centroids")
+    names(tabula) <- c("sp", "wa", "lc", "bp", "reg", "cn")
+    if (is.null(x$CCA))
         tabula <- tabula[1:2]
     display <- match.arg(display, c("sites", "species", "wa",
-                                    "lc", "bp", "cn"),
+                                    "lc", "bp", "cn", "reg"),
                          several.ok = TRUE)
     if("sites" %in% display)
       display[display == "sites"] <- "wa"
@@ -20,7 +23,12 @@
       display[display == "species"] <- "sp"
     take <- tabula[display]
     sumev <- x$tot.chi
-    slam <- sqrt(c(x$CCA$eig, x$CA$eig)[choices]/sumev)
+    ## dbrda can have negative eigenvalues, but have scores only for
+    ## positive
+    eigval <- eigenvals(x)
+    if (inherits(x, "dbrda") && any(eigval < 0))
+        eigval <- eigval[eigval > 0]
+    slam <- sqrt(eigval[choices]/sumev)
     nr <- if (is.null(x$CCA))
         nrow(x$CA$u)
     else
@@ -37,7 +45,11 @@
     if (length(const) == 1) {
         const <- c(const, const)
     }
-    rnk <- x$CCA$rank
+    ## in dbrda we only have scores for positive eigenvalues
+    if (inherits(x, "dbrda"))
+        rnk <- x$CCA$poseig
+    else
+        rnk <- x$CCA$rank
     sol <- list()
     ## process scaling; numeric scaling will just be returned as is
     scaling <- scalingType(scaling = scaling, correlation = correlation)
@@ -52,7 +64,10 @@
             }
             v <- const[1] * v
         }
-        sol$species <- v
+        if (nrow(v) > 0)
+            sol$species <- v
+        else
+            sol$species <- NULL
     }
     if ("sites" %in% take) {
         wa <- cbind(x$CCA$wa, x$CA$u)[, choices, drop=FALSE]
@@ -77,7 +92,23 @@
         b[, choices <= rnk] <- x$CCA$biplot[, choices[choices <= rnk]]
         colnames(b) <- c(colnames(x$CCA$u), colnames(x$CA$u))[choices]
         rownames(b) <- rownames(x$CCA$biplot)
+        if (scaling) {
+            scal <- list(slam, 1, sqrt(slam))[[abs(scaling)]]
+            b <- sweep(b, 2, scal, "*")
+        }
         sol$biplot <- b
+    }
+    if ("regression" %in% take) {
+        b <- coef(x, norm = TRUE)
+        reg <- matrix(0, nrow(b), length(choices))
+        reg[, choices <= rnk] <- b[, choices[choices <= rnk]]
+        dimnames(reg) <- list(rownames(b),
+                              c(colnames(x$CCA$u), colnames(x$CA$u))[choices])
+        if (scaling) {
+            scal <- list(slam, 1, sqrt(slam))[[abs(scaling)]]
+            reg <- sweep(reg, 2, scal, "*")
+        }
+        sol$regression <- reg
     }
     if ("centroids" %in% take) {
         if (is.null(x$CCA$centroids))
@@ -98,14 +129,14 @@
     ## Take care that scores have names
     if (length(sol)) {
         for (i in seq_along(sol)) {
-            if (is.matrix(sol[[i]])) 
+            if (is.matrix(sol[[i]]))
                 rownames(sol[[i]]) <-
-                    rownames(sol[[i]], do.NULL = FALSE, 
+                    rownames(sol[[i]], do.NULL = FALSE,
                              prefix = substr(names(sol)[i], 1, 3))
         }
     }
     ## Only one type of scores: return a matrix instead of a list
-    if (length(sol) == 1) 
+    if (length(sol) == 1)
         sol <- sol[[1]]
     ## collapse const if both items identical
     if (identical(const[1], const[2]))

@@ -1,9 +1,10 @@
 `multipart.default` <-
     function(y, x, index=c("renyi", "tsallis"), scales = 1,
-             global = FALSE, relative = FALSE, nsimul=99, ...)
+             global = FALSE, relative = FALSE, nsimul=99,
+             method = "r2dtable", ...)
 {
     if (length(scales) > 1)
-        stop("length of 'scales' must be 1")
+        stop("length of 'scales' must be one")
     ## evaluate formula
     lhs <- as.matrix(y)
     if (missing(x))
@@ -11,10 +12,10 @@
             leve_2=rep(1, nrow(lhs)))
     rhs <- data.frame(x)
     rhs[] <- lapply(rhs, as.factor)
-    rhs[] <- lapply(rhs, droplevels)
+    rhs[] <- lapply(rhs, droplevels, exclude = NA)
     nlevs <- ncol(rhs)
     if (nlevs < 2)
-        stop("provide at least two level hierarchy")
+        stop("provide at least two-level hierarchy")
     if (any(rowSums(lhs) == 0))
         stop("data matrix contains empty rows")
     if (any(lhs < 0))
@@ -49,9 +50,7 @@
         ftmp[[i]] <- as.formula(paste("~", tlab[i], "- 1"))
     }
 
-    ## is there a method/burnin/thin in ... ?
-    method <- if (is.null(list(...)$method))
-        "r2dtable" else list(...)$method
+    ## is there burnin/thin in ... ?
     burnin <- if (is.null(list(...)$burnin))
         0 else list(...)$burnin
     thin <- if (is.null(list(...)$thin))

@@ -1,21 +1,11 @@
 `print.cca` <-
-    function (x, digits = max(3, getOption("digits") - 3), ...) 
+    function (x, digits = max(3, getOption("digits") - 3), ...)
 {
-    if (inherits(x, "pcaiv")) {
-        warning("this is an ade4 object which vegan cannot handle")
-        x <- ade2vegancca(x)
-    }
     writeLines(strwrap(pasteCall(x$call)))
     cat("\n")
     chi <- c(x$tot.chi, x$pCCA$tot.chi, x$CCA$tot.chi, x$CA$tot.chi)
     props <- chi/chi[1]
     rnk <- c(NA, x$pCCA$rank, x$CCA$rank, x$CA$rank)
-    ## handle negative eigenvalues of capscale
-    if (!is.null(x$CA$imaginary.chi)) 
-        rchi <- c(x$real.tot.chi, x$pCCA$real.tot.chi,
-                  x$CCA$real.tot.chi, x$CA$real.tot.chi)
-    else
-        rchi <- NULL
     ## report no. of real axes in dbrda if any negative eigenvalues
     if (inherits(x, "dbrda") &&
         (!is.null(x$CCA) && x$CCA$poseig < x$CCA$qrank ||
@@ -23,12 +13,12 @@
         poseig <- c(NA, if (!is.null(x$pCCA)) NA, x$CCA$poseig, x$CA$poseig)
     else
         poseig <- NULL
-    tbl <- cbind(chi, props, rchi, rnk, poseig)
-    if (!is.null(rchi))
-        tbl <- rbind(tbl, c(NA, NA, x$CA$imaginary.chi,
-                            x$CA$imaginary.rank))
-    colnames(tbl) <- c("Inertia", "Proportion",
-                       if(!is.null(rchi)) "Eigenvals", "Rank",
+    tbl <- cbind(chi, props, rnk, poseig)
+    if (!is.null(x$CA$imaginary.chi))
+        tbl <- rbind(tbl, c(x$CA$imaginary.chi,
+                            x$CA$imaginary.chi/x$tot.chi,
+                            x$CA$imaginary.rank, NULL))
+    colnames(tbl) <- c("Inertia", "Proportion", "Rank",
                        if (!is.null(poseig)) "RealDims")
     rn <- c("Total", "Conditional", "Constrained", "Unconstrained",
             "Imaginary")
@@ -42,6 +32,9 @@
     cs <- which(colnames(tbl) == "Rank") - 1
     printCoefmat(tbl, digits = digits, na.print = "", cs.ind = seq_len(cs))
     cat("Inertia is", x$inertia, "\n")
+    ## data used for species scores in db ordination
+    if (!is.null(x$vdata))
+        cat("Species scores projected from", sQuote(x$vdata), "\n")
     if (!is.null(x$CCA$alias))
         cat("Some constraints were aliased because they were collinear (redundant)\n")
     ## Report removed observations and species
@@ -63,11 +56,31 @@
         cat("\nEigenvalues for unconstrained axes:\n")
         if (x$CA$rank > ax.trig) {
             print(zapsmall(x$CA$eig[1:ax.lim], digits = digits), ...)
-            cat("(Showed only", ax.lim, "of all", x$CA$rank, 
+            cat("(Showing", ax.lim, "of", x$CA$rank,
                 "unconstrained eigenvalues)\n")
         }
         else print(zapsmall(x$CA$eig, digits = digits), ...)
     }
     cat("\n")
+    if (inherits(x, c("capscale", "dbrda"))) {
+        if (!is.null(x$metaMDSdist))
+            cat("metaMDSdist transformed data:", x$metaMDSdist, "\n\n")
+        if (!is.null(x$ac))
+            cat("Constant added to distances:", x$ac, "\n\n")
+    }
     invisible(x)
+}
+
+### package klaR has another function called rda(), and to avoid using
+### klar:::print.rda instead of delegating to vegan:::print.cca we
+### define here a (redundant) print.rda
+
+`print.rda` <-
+    function(x, ...)
+{
+    ## not vegan rda?
+    if (!("CA" %in% names(x)))
+        stop(gettextf("%s is not a vegan rda object",
+                      sQuote(deparse(substitute(x)))))
+    NextMethod("print", x, ...)
 }

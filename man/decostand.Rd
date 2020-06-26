@@ -32,7 +32,7 @@ wisconsin(x)
   \itemize{
     \item \code{total}: divide by margin total (default \code{MARGIN = 1}).
     \item \code{max}: divide by margin maximum (default \code{MARGIN = 2}).
-    \item \code{freq}: divide by margin maximum and multiply by the
+    \item \code{frequency}: divide by margin total and multiply by the
     number of non-zero items, so that the average of non-zero entries is
     one (Oksanen 1983; default \code{MARGIN = 2}).
     \item \code{normalize}: make margin sum of squares equal to one (default
@@ -40,6 +40,12 @@ wisconsin(x)
     \item \code{range}: standardize values into range 0 \dots 1 (default
     \code{MARGIN = 2}).  If all values are constant, they will be
     transformed to 0.
+    
+    \item \code{rank, rrank}: \code{rank} replaces abundance values by
+    their increasing ranks leaving zeros unchanged, and \code{rrank} is
+    similar but uses relative ranks with maximum 1 (default
+    \code{MARGIN = 1}). Average ranks are used for tied values.
+
     \item \code{standardize}: scale \code{x} to zero mean and unit variance
     (default \code{MARGIN = 2}).
     \item \code{pa}: scale \code{x} to presence/absence scale (0/1).

@@ -5,30 +5,31 @@
 \description{
   The function computes dissimilarity indices that are useful for or
   popular with community ecologists. All indices use quantitative data,
-  although they would be named by the corresponding binary index, but you
-  can calculate the binary index using an appropriate argument.
-  If you do not find your favourite
-  index here, you can see if it can be implemented using
-  \code{\link{designdist}}. 
-  Gower, Bray--Curtis, Jaccard and
-  Kulczynski indices are good in detecting underlying
+  although they would be named by the corresponding binary index, but
+  you can calculate the binary index using an appropriate argument.  If
+  you do not find your favourite index here, you can see if it can be
+  implemented using \code{\link{designdist}}.  Gower, Bray--Curtis,
+  Jaccard and Kulczynski indices are good in detecting underlying
   ecological gradients (Faith et al. 1987). Morisita, Horn--Morisita,
-  Binomial, Cao and Chao
-  indices should be able to handle different sample sizes (Wolda 1981,
-  Krebs 1999, Anderson & Millar 2004),
-  and Mountford (1962) and Raup-Crick indices for presence--absence data should
-  be able to handle unknown (and variable) sample sizes.
+  Binomial, Cao and Chao indices should be able to handle different
+  sample sizes (Wolda 1981, Krebs 1999, Anderson & Millar 2004), and
+  Mountford (1962) and Raup-Crick indices for presence--absence data
+  should be able to handle unknown (and variable) sample sizes. Most of
+  these indices are discussed by Krebs (1999) and Legendre & Legendre
+  (2012), and their properties further compared by Wolda (1981) and
+  Legendre & De \enc{Cáceres}{Caceres} (2012).
 }
 
 \usage{vegdist(x, method="bray", binary=FALSE, diag=FALSE, upper=FALSE,
         na.rm = FALSE, ...) } 
 \arguments{
   \item{x}{Community data matrix.}
-  \item{method}{Dissimilarity index, partial match to  \code{"manhattan"},
-    \code{"euclidean"}, \code{"canberra"}, \code{"bray"}, \code{"kulczynski"},
-     \code{"jaccard"}, \code{"gower"}, \code{"altGower"}, \code{"morisita"}, 
-     \code{"horn"}, \code{"mountford"}, \code{"raup"} , \code{"binomial"}, 
-     \code{"chao"}, \code{"cao"} or \code{"mahalanobis"}.}
+  \item{method}{Dissimilarity index, partial match to
+    \code{"manhattan"}, \code{"euclidean"}, \code{"canberra"},
+    \code{"clark"}, \code{"bray"}, \code{"kulczynski"},
+    \code{"jaccard"}, \code{"gower"}, \code{"altGower"},
+    \code{"morisita"}, \code{"horn"}, \code{"mountford"}, \code{"raup"},
+    \code{"binomial"}, \code{"chao"}, \code{"cao"} or \code{"mahalanobis"}.}
   \item{binary}{Perform presence/absence standardization before analysis
     using \code{\link{decostand}}.}
   \item{diag}{Compute diagonals. }
@@ -54,7 +55,7 @@
   
   \tabular{ll}{
     \code{euclidean}
-    \tab \eqn{d_{jk} = \sqrt{\sum_i (x_{ij}-x_{ik})^2}}{d[jk] = sqrt(sum(x[ij]-x[ik])^2)}
+    \tab \eqn{d_{jk} = \sqrt{\sum_i (x_{ij}-x_{ik})^2}}{d[jk] = sqrt(sum((x[ij]-x[ik])^2))}
     \cr \tab binary: \eqn{\sqrt{A+B-2J}}{sqrt(A+B-2*J)}
     \cr
     \code{manhattan}
@@ -64,7 +65,7 @@
     \code{gower}
     \tab \eqn{d_{jk} = (1/M) \sum_i \frac{|x_{ij}-x_{ik}|}{\max x_i-\min
 	x_i}}{d[jk] = (1/M) sum(abs(x[ij]-x[ik])/(max(x[i])-min(x[i])))}
-    \cr \tab binary: \eqn{(A+B-2J)/M}{(A+B-2*J)/M},
+    \cr \tab binary: \eqn{(A+B-2J)/M}{(A+B-2*J)/M}
     \cr
     \tab where \eqn{M} is the number of columns (excluding missing
     values)
@@ -78,7 +79,14 @@
     \cr
     \code{canberra}
     \tab \eqn{d_{jk}=\frac{1}{NZ} \sum_i
-      \frac{|x_{ij}-x_{ik}|}{x_{ij}+x_{ik}}}{d[jk] = (1/NZ) sum ((x[ij]-x[ik])/(x[ij]+x[ik]))}
+      \frac{|x_{ij}-x_{ik}|}{|x_{ij}|+|x_{ik}|}}{d[jk] = (1/NZ) sum (abs(x[ij]-x[ik])/(abs(x[ij])+abs(x[ik])))}
+    \cr
+    \tab where \eqn{NZ} is the number of non-zero entries.
+    \cr \tab binary: \eqn{\frac{A+B-2J}{A+B-J}}{(A+B-2*J)/(A+B-J)}
+    \cr
+    \code{clark}
+    \tab \eqn{d_{jk}=\sqrt{\frac{1}{NZ} \sum_i
+      (\frac{x_{ij}-x_{ik}}{x_{ij}+x_{ik}})^2}}{d[jk] = sqrt( (1/NZ) sum (((x[ij]-x[ik])/(x[ij]+x[ik]))^2))}
     \cr
     \tab where \eqn{NZ} is the number of non-zero entries.
     \cr \tab binary: \eqn{\frac{A+B-2J}{A+B-J}}{(A+B-2*J)/(A+B-J)}
@@ -89,8 +97,8 @@
     \cr
     \code{kulczynski}
     \tab \eqn{d_{jk} = 1-0.5(\frac{\sum_i \min(x_{ij},x_{ik})}{\sum_i x_{ij}} +
-      \frac{\sum_i \min(x_{ij},x_{ik})}{\sum_i x_{ik}} )}{d[jk] 1 - 0.5*((sum min(x[ij],x[ik])/(sum x[ij]) + (sum
-      min(x[ij],x[ik])/(sum x[ik]))}
+      \frac{\sum_i \min(x_{ij},x_{ik})}{\sum_i x_{ik}} )}{d[jk] 1 - 0.5*(sum(min(x[ij],x[ik]))/(sum x[ij]) + sum(
+      min(x[ij],x[ik]))/(sum x[ik]))}
     \cr \tab binary: \eqn{1-(J/A + J/B)/2}{1-(J/A + J/B)/2}
     \cr
     \code{morisita}
@@ -194,20 +202,21 @@
   
   Chao index tries to take into account the number of unseen species
   pairs, similarly as in \code{method = "chao"} in
-  \code{\link{specpool}}. Function \code{vegdist} implements a Jaccard
-  type index defined as \eqn{d_{jk} = 1 - U_j U_k/(U_j + U_k - U_j
-  U_k)}{d[jk] = 1 - U[j]*U[k]/(U[j] + U[k] - U[j]*U[k])}, where
-  \eqn{U_j = C_j/N_j + (N_k - 1)/N_k \times a_1/(2 a_2) \times
-  S_j/N_j}{U[j] = C[j]/N[j] + (N[k] -1)/N[k] * a1/(2*a2) * S[j]/N[j]},
-  and similarly for \eqn{U_k}{U[k]}. Here \eqn{C_j}{C[j]} is the total
-  number of individuals in the species of site \eqn{j} that are shared
-  with site \eqn{k}, \eqn{N_j}{N[j]} is the total number of
-  individuals at site \eqn{j}, \eqn{a_1}{a1} (and \eqn{a_2}{a2}) are
-  the number of species occurring in site \eqn{j} that have only one
-  (or two) individuals in site \eqn{k}, and \eqn{S_j}{S[j]} is the
-  total number of individuals in the species present at site \eqn{j}
-  that occur with only one individual in site \eqn{k} (Chao et
-  al. 2005).
+  \code{\link{specpool}}. Function \code{vegdist} implements a
+  Jaccard, index defined as
+  \eqn{1-\frac{U \times V}{U + V - U \times V}}{1 - U*V/(U + V - U*V)};
+  other types can be defined with function \code{\link{chaodist}}. In Chao
+  equation, \eqn{U = C_j/N_j + (N_k - 1)/N_k \times a_1/(2 a_2) \times
+  S_j/N_j}{U = C[j]/N[j] + (N[k] -1)/N[k] * a1/(2*a2) * S[j]/N[j]},
+  and \eqn{V} is similar except for site index
+  \eqn{k}. \eqn{C_j}{C[j]} is the total number of individuals in the
+  species of site \eqn{j} that are shared with site \eqn{k},
+  \eqn{N_j}{N[j]} is the total number of individuals at site \eqn{j},
+  \eqn{a_1}{a1} (and \eqn{a_2}{a2}) are the number of species
+  occurring in site \eqn{j} that have only one (or two) individuals in
+  site \eqn{k}, and \eqn{S_j}{S[j]} is the total number of individuals
+  in the species present at site \eqn{j} that occur with only one
+  individual in site \eqn{k} (Chao et al. 2005).
 
   Morisita index can be used with genuine count data (integers) only. Its
   Horn--Morisita variant is able to handle any abundance data.
@@ -217,7 +226,11 @@
   index is not commonly used for community data, but it is sometimes
   used for environmental variables. The calculation is based on
   transforming data matrix and then using Euclidean distances
-  following Mardia et al. (1979).
+  following Mardia et al. (1979). The Mahalanobis transformation
+  usually fails when the number of columns is larger than the number
+  of rows (sampling units). When the transformation fails, the
+  distances are nearly constant except for small numeric noise. Users
+  must check that the returned Mahalanobis distances are meaningful.
 
   Euclidean and Manhattan dissimilarities are not good in gradient
   separation without proper standardization but are still included for
@@ -271,7 +284,7 @@
   Chase, J.M., Kraft, N.J.B., Smith, K.G., Vellend, M. and Inouye,
   B.D. (2011). Using null models to disentangle variation in community
   dissimilarity from variation in \eqn{\alpha}{alpha}-diversity.
-  \emph{Ecosphere} 2:art24 [doi:10.1890/ES10-00117.1]
+  \emph{Ecosphere} 2:art24 \doi{10.1890/ES10-00117.1}
    
   Faith, D. P, Minchin, P. R. and Belbin, L. (1987).
   Compositional dissimilarity as a robust measure of ecological
@@ -280,7 +293,16 @@
   Gower, J. C. (1971). A general coefficient of similarity and some
   of its properties. \emph{Biometrics} 27, 623--637.
 
-  Krebs, C. J. (1999). \emph{Ecological Methodology.} Addison Wesley Longman.
+  Krebs, C. J. (1999). \emph{Ecological Methodology.} Addison Wesley
+  Longman.
+
+  Legendre, P. & De \enc{Cáceres}{Caceres}, M. (2012). Beta diversity as
+  the variance of community data: dissimilarity coefficients and
+  partitioning. \emph{Ecology Letters} 16, 951--963.
+  \doi{10.1111/ele.12141}
+
+  Legendre, P. and Legendre, L. (2012) \emph{Numerical Ecology}. 3rd English
+  ed. Elsevier.
 
   Mardia, K.V., Kent, J.T. and Bibby, J.M. (1979). \emph{Multivariate analysis}.
   Academic Press.

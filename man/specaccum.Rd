@@ -12,6 +12,8 @@
 \alias{predict.fitspecaccum}
 \alias{AIC.fitspecaccum}
 \alias{deviance.fitspecaccum}
+\alias{logLik.fitspecaccum}
+\alias{nobs.fitspecaccum}
 \alias{specslope}
 
 \title{Species Accumulation Curves}
@@ -24,8 +26,8 @@
 specaccum(comm, method = "exact", permutations = 100,
           conditioned =TRUE, gamma = "jack1",  w = NULL, subset, ...)
 \method{plot}{specaccum}(x, add = FALSE, random = FALSE, ci = 2, 
-    ci.type = c("bar", "line", "polygon"), col = par("fg"), ci.col = col, 
-    ci.lty = 1, xlab, ylab = x$method, ylim, 
+    ci.type = c("bar", "line", "polygon"), col = par("fg"), lty = 1,
+    ci.col = col, ci.lty = 1, ci.length = 0, xlab, ylab = x$method, ylim,
     xvar = c("sites", "individuals", "effort"), ...)
 \method{boxplot}{specaccum}(x, add = FALSE, ...)
 fitspecaccum(object, model, method = "random", ...)
@@ -70,10 +72,13 @@ specslope(object, at)
     draws vertical bars, \code{"line"} draws lines, and
     \code{"polygon"} draws a shaded area.}
   \item{col}{Colour for drawing lines.}
+  \item{lty}{line type (see \code{\link{par}}).}
   \item{ci.col}{Colour for drawing lines or filling the
     \code{"polygon"}.}
   \item{ci.lty}{Line type for confidence intervals or border of the
     \code{"polygon"}.}
+  \item{ci.length}{Length of horizontal bars (in inches) at the end of
+    vertical bars with \code{ci.type = "bar"}.}
   \item{xlab,ylab}{Labels for \code{x} (defaults \code{xvar}) and
     \code{y} axis.}
   \item{ylim}{the y limits of the plot.}
@@ -82,7 +87,6 @@ specslope(object, at)
     \code{method = "rarefaction"}. }
   \item{object}{Either a community data set or fitted \code{specaccum} model.}
   \item{model}{Nonlinear regression model (\code{\link{nls}}). See Details.}
-  \item{lty}{line type code (see \code{\link{par}}.}
   
   \item{newdata}{Optional data used in prediction interpreted as
     number of sampling units (sites). If missing, fitted values are
@@ -159,7 +163,7 @@ specslope(object, at)
   self-starting species accumulation model. The input \code{object}
   can be a result of \code{specaccum} or a community in data frame. In
   the latter case the function first fits a \code{specaccum} model and
-  then proceeds with fitting the a nonlinear model. The function can
+  then proceeds with fitting the nonlinear model. The function can
   apply a limited set of nonlinear regression models suggested for
   species-area relationship (Dengler 2009). All these are
   \code{\link{selfStart}} models. The permissible alternatives are
@@ -168,7 +172,7 @@ specslope(object, at)
   \code{"lomolino"} (\code{\link{SSlomolino}}) of \pkg{vegan}
   package. In addition the following standard \R models are available:
   \code{"asymp"} (\code{\link{SSasymp}}), \code{"gompertz"}
-  (\code{\link{SSgompertz}}), \code{"michaelis-menten"})
+  (\code{\link{SSgompertz}}), \code{"michaelis-menten"}
   (\code{\link{SSmicmen}}), \code{"logis"} (\code{\link{SSlogis}}),
   \code{"weibull"} (\code{\link{SSweibull}}). See these functions for
   model specification and details. 
@@ -180,9 +184,9 @@ specslope(object, at)
 
   Function \code{predict} for \code{fitspecaccum} uses
   \code{\link{predict.nls}}, and you can pass all arguments to that
-  function. In addition, \code{fitted}, \code{residuals} and
-  \code{coef}, \code{AIC} and \code{deviance} work on the result
-  object.
+  function. In addition, \code{fitted}, \code{residuals}, \code{nobs},
+  \code{coef}, \code{AIC}, \code{logLik} and \code{deviance} work on
+  the result object.
 
   Function \code{specslope} evaluates the derivative of the species
   accumulation curve at given number of sample plots, and gives the

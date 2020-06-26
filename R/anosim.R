@@ -1,21 +1,26 @@
 `anosim` <-
-    function (dat, grouping, permutations = 999,
-              distance = "bray", strata = NULL, parallel = getOption("mc.cores")) 
+    function (x, grouping, permutations = 999,
+              distance = "bray", strata = NULL, parallel = getOption("mc.cores"))
 {
     EPS <- sqrt(.Machine$double.eps)
-    if (inherits(dat, "dist")) 
-        x <- dat
-    else if ((is.matrix(dat) || is.data.frame(dat)) &&
-             isSymmetric(unname(as.matrix(dat)))) {
-        x <- as.dist(dat)
-        attr(x, "method") <- "user supplied square matrix"
+    if (!inherits(x, "dist")) { # x is not "dist": try to change it
+        if ((is.matrix(x) || is.data.frame(x)) &&
+            isSymmetric(unname(as.matrix(x)))) {
+            x <- as.dist(x)
+            attr(x, "method") <- "user supplied square matrix"
+        }
+        else
+            x <- vegdist(x, method = distance)
     }
-    else
-        x <- vegdist(dat, method = distance)
     if (any(x < -sqrt(.Machine$double.eps)))
-        warning("some dissimilarities are negative -- is this intentional?")
+        warning("some dissimilarities are negative - is this intentional?")
     sol <- c(call = match.call())
     grouping <- as.factor(grouping)
+    ## check that dims match
+    if (length(grouping) != attr(x, "Size"))
+        stop(
+            gettextf("dissimilarities have %d observations, but grouping has %d",
+                     attr(x, "Size"), length(grouping)))
     if (length(levels(grouping)) < 2)
         stop("there should be more than one class level")
     matched <- function(irow, icol, grouping) {
@@ -27,6 +32,9 @@
     irow <- as.vector(as.dist(row(matrix(nrow = N, ncol = N))))
     icol <- as.vector(as.dist(col(matrix(nrow = N, ncol = N))))
     within <- matched(irow, icol, grouping)
+    ## check that there is replication
+    if (!any(within))
+        stop("there should be replicates within groups")
     aver <- tapply(x.rank, within, mean)
     statistic <- -diff(aver)/div
     cl.vec <- rep("Between", length(x))

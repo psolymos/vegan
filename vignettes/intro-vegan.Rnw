@@ -3,7 +3,7 @@
 \documentclass[a4paper,10pt]{article}
 \usepackage{vegan} % vegan settings
 
-\title{Vegan: an introduction to ordination} 
+\title{Vegan: an introduction to ordination}
 \author{Jari Oksanen}
 
 \date{\footnotesize{
@@ -36,7 +36,7 @@ options("prompt" = "> ", "continue" = "  ")
   classes. The constrained ordination uses constrained (canonical)
   correspondence analysis as an example. It is first shown how a model
   is defined, then the document discusses model building and
-  signficance tests of the whole analysis, single constraints and
+  significance tests of the whole analysis, single constraints and
   axes.
 \end{abstract}
 \tableofcontents
@@ -45,9 +45,11 @@ options("prompt" = "> ", "continue" = "  ")
 \noindent \pkg{Vegan} is a package for community ecologists.  This
 documents explains how the commonly used ordination methods can be
 performed in \pkg{vegan}.  The document only is a very basic
-introduction.  Another document (\emph{vegan tutorial})
-(\url{http://cc.oulu.fi/~jarioksa/opetus/method/vegantutor.pdf}) gives
-a longer and more detailed introduction to ordination.  The
+introduction.
+%Another document (\emph{vegan tutorial})
+%(\url{http://cc.oulu.fi/~jarioksa/opetus/method/vegantutor.pdf}) gives
+%a longer and more detailed introduction to ordination.
+The
 current document only describes a small part of all \pkg{vegan}
 functions.  For most functions, the canonical references are the
 \pkg{vegan} help pages, and some of the most important additional
@@ -172,7 +174,7 @@ methods you can try:
 \item Zoom into graph setting axis limits \code{xlim} and
   \code{ylim}.  You must typically set both, because \pkg{vegan}
   will maintain equal aspect ratio of axes.
-\item Use points and add labell only some points with \code{identify}
+\item Use points and add label only to some points with \code{identify}
   command.
 \item Use \code{select} argument in ordination \code{text} and
   \code{points} functions to only show the specified items.
@@ -198,9 +200,10 @@ methods you can try:
 
 \pkg{Vegan} has a group of functions for adding information about
 classification or grouping of points onto ordination diagrams.
-Function \code{ordihull} adds convex hulls, \code{ordiellipse}
-adds ellipses of standard deviation, standard error or confidence
-areas, and \code{ordispider} combines items to their centroid
+Function \code{ordihull} adds convex hulls, \code{ordiellipse} adds
+ellipses enclosing all points in the group (ellipsoid hulls) or
+ellipses of standard deviation, standard error or confidence areas,
+and \code{ordispider} combines items to their centroid
 (Fig. \ref{fig:ordihull}):
 <<>>=
 data(dune.env)
@@ -208,16 +211,17 @@ attach(dune.env)
 @
 <<a>>=
 plot(ord, disp="sites", type="n")
-ordihull(ord, Management, col="blue")
-ordiellipse(ord, Management, col=3,lwd=2)
-ordispider(ord, Management, col="red", label = TRUE)
+ordihull(ord, Management, col=1:4, lwd=3)
+ordiellipse(ord, Management, col=1:4, kind = "ehull", lwd=3)
+ordiellipse(ord, Management, col=1:4, draw="polygon")
+ordispider(ord, Management, col=1:4, label = TRUE)
 points(ord, disp="sites", pch=21, col="red", bg="yellow", cex=1.3)
 @
 \begin{figure}
 <<fig=true,echo=false>>=
 <<a>>
 @
-\caption{Convex hull, standard error ellipse and a spider web diagram
+\caption{Convex hull, ellipsoid hull, standard error ellipse and a spider web diagram
   for Management levels in ordination.}
 \label{fig:ordihull}
 \end{figure}

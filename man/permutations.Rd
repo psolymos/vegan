@@ -26,7 +26,7 @@
   Above, we use \emph{DATA} to mean either the observed data themselves
   or some function of the data, for example the residuals of an
   ordination model in the presence of covariables.
-  
+
   These capabilities are provided by functions from the \pkg{permute}
   package. The user can request a particular type of permutation by
   supplying the \code{permutations} argument of a function with an
@@ -38,7 +38,7 @@
   columns equal to the number of observations in the data) and
   \pkg{vegan} will use these permutations instead of generating new
   permutations.
-  
+
   The majority of functions in \pkg{vegan} allow for the full range of
   possibilities outlined above. Exceptions include
   \code{\link{kendall.post}} and \code{\link{kendall.global}}.
@@ -79,7 +79,7 @@
     \item{The permutation p-value is computed as
       \deqn{p = \frac{N + 1}{n + 1}}{(N + 1) / (n + 1)}}
   }
-  
+
   The above description illustrates why the default number of
   permutations specified in \pkg{vegan} functions takes values of 199 or
   999 for example. Pretty \emph{p} values are achieved because the
@@ -104,14 +104,14 @@
   (2010) show that the naive calculation of the permutation \emph{p}
   value is
 
-  \deqn{p = \frac{N}{n}}{p = (N / n)}
+  \deqn{p = \frac{N}{n}}{p = N / n}
 
   which leads to an invalid test with incorrect type I error rate. They
   go on to show that by replacing the unknown tail probability (the
   \emph{p} value) of the Null distribution with the biased estimator
 
-  \deqn{p = \frac{N + 1}{n + 1}}{p = (N + 1 / n + 1)}
-  
+  \deqn{p = \frac{N + 1}{n + 1}}{p = (N + 1) / (n + 1)}
+
   that the positive bias induced is of just the right size to
   account for the  uncertainty in the estimation of the tail probability
   from the set of randomly sampled permutations to yield a test with the
@@ -137,7 +137,7 @@
   statistic can take under permutation of the data (Phipson & Smyth,
   2010). This represents a slight loss of statistical power for the
   conservative \emph{p} value calculation used here. However, unless
-  smaples sizes are small and the the permutation design such that the
+  sample sizes are small and the the permutation design such that the
   set of values that the test statistic can take is also small, this
   loss of power is unlikely to be critical.
 
@@ -154,7 +154,7 @@
   low number of observations, there may not be as many unique
   permutations of the data as you might desire to reach the required
   level of significance.
-  
+
   It is currently the responsibility of the user to determine the total
   number of possible permutations for their \emph{DATA}. The number of
   possible permutations allowed under the specified design can be
@@ -177,7 +177,7 @@
   to the nature of \emph{DATA} or the experimental design, enumeration
   of all permutations becomes important and achievable computationally.
 
-  Above, we have provided only a brief overview of the capbilities of
+  Above, we have provided only a brief overview of the capabilities of
   \pkg{vegan} and \pkg{permute}. To get the best out of the new
   functionality and for details on how to set up permutation designs
   using \code{\link[permute]{how}}, consult the vignette
@@ -185,6 +185,18 @@
   with \pkg{permute} and accessible via \code{vignette("permutations",
   package = "permute").}
 }
+
+\section{Random Number Generation}{
+
+  The permutations are based on the random number generator provided
+  by \R. This may change in \R{} releases and change the permutations
+  and \pkg{vegan} test results. One such change was in \R{} release
+  3.6.0. The new version is clearly better for permutation tests and
+  you should use it. However, if you need to reproduce old results,
+  you can set the \R{} random number generator to a previous version
+  with \code{\link{RNGversion}}.
+
+} % section RNG
 
 \seealso{
   \code{\link{permutest}} for the main interface in \pkg{vegan}. See
@@ -199,12 +211,12 @@
 
   Manly, B. F. J. (2006). \emph{Randomization, Bootstrap and Monte Carlo
   Methods in Biology}, Third Edition. Chapman and Hall/CRC.
-  
+
   Phipson, B., & Smyth, G. K. (2010). Permutation P-values should never
   be zero: calculating exact P-values when permutations are randomly
   drawn. \emph{Statistical Applications in Genetics and Molecular
     Biology}, \strong{9}, Article 39. DOI: 10.2202/1544-6115.1585
-  
+
   ter Braak, C. J. F. (1990). \emph{Update notes: CANOCO version
     3.1}. Wageningen: Agricultural Mathematics Group. (UR).
 

@@ -1,17 +1,18 @@
 `dbrda` <-
     function (formula, data, distance = "euclidean",
-              sqrt.dist = FALSE,  dfun = vegdist,
+              sqrt.dist = FALSE,  add = FALSE, dfun = vegdist,
               metaMDSdist = FALSE, na.action = na.fail,
-              subset = NULL, ...) 
+              subset = NULL, ...)
 {
     EPS <- sqrt(.Machine$double.eps)
-    if (!inherits(formula, "formula")) 
-        stop("Needs a model formula")
+    if (!inherits(formula, "formula"))
+        stop("needs a model formula")
     if (missing(data)) {
         data <- parent.frame()
     }
     else {
-        data <- ordiGetData(match.call(), environment(formula))
+        data <- eval(match.call()$data, environment(formula),
+                     enclos = .GlobalEnv)
     }
     formula <- formula(terms(formula, data = data))
     ## The following line was eval'ed in environment(formula), but
@@ -35,14 +36,13 @@
             X <- dfun(X, distance)
         }
     }
+    ## get the name of the inertia
     inertia <- attr(X, "method")
     if (is.null(inertia))
         inertia <- "unknown"
-    inertia <- paste(toupper(substr(inertia, 1, 1)), substr(inertia, 
-                                                            2, 256), sep = "")
+    inertia <- paste(toupper(substr(inertia, 1, 1)),
+                     substring(inertia, 2), sep = "")
     inertia <- paste(inertia, "distance")
-    if (!sqrt.dist)
-        inertia <- paste("squared", inertia)
 
     ## evaluate formula: ordiParseFormula will return dissimilarities
     ## as a symmetric square matrix (except that some rows may be
@@ -50,7 +50,8 @@
     d <- ordiParseFormula(formula,
                           data,
                           na.action = na.action,
-                          subset = substitute(subset))
+                          subset = substitute(subset),
+                          X = X)
     ## ordiParseFormula subsets rows of dissimilarities: do the same
     ## for columns ('comm' is handled later). ordiParseFormula
     ## returned the original data, but we use instead the potentially
@@ -64,132 +65,66 @@
     }
     X <- as.matrix(X)
     k <- NROW(X) - 1
+    ## sqrt & add adjustments
     if (sqrt.dist)
         X <- sqrt(X)
+    if (is.logical(add) && isTRUE(add))
+        add <- "lingoes"
+    if (is.character(add)) {
+        add <- match.arg(add, c("lingoes", "cailliez"))
+        if (add == "lingoes") {
+            ac <- addLingoes(X)
+            X <- sqrt(X^2 + 2 * ac)
+        } else if (add == "cailliez") {
+            ac <- addCailliez(X)
+            X <- X + ac
+        }
+        diag(X) <- 0
+    } else {
+        ac <- 0
+    }
+    ## update the name of the inertia
+    if (!sqrt.dist)
+        inertia <- paste("squared", inertia)
+    if (ac > sqrt(.Machine$double.eps))
+        inertia <- paste(paste0(toupper(substring(add, 1, 1)),
+                              substring(add, 2)), "adjusted", inertia)
     if (max(X) >= 4 + .Machine$double.eps) {
         inertia <- paste("mean", inertia)
-        adjust <- 1
+        adjust <- sqrt(k)
+        X <- X/adjust
     }
     else {
-        adjust <- sqrt(k)
+        adjust <- 1
     }
-    nm <- attr(X, "Labels")    
+    nm <- attr(X, "Labels")
     ## Get components of inertia with negative eigenvalues following
     ## McArdle & Anderson (2001), section "Theory". G is their
     ## double-centred Gower matrix, but instead of hat matrix, we use
     ## QR decomposition to get the components of inertia.
-    G <- -GowerDblcen(X^2)/2
-    if (adjust == 1)
-        G <- G/k
-    ## Solution: this shows the algorithmic steps
-    tot.chi <- sum(diag(G))
-    pCCA <- CCA <-  CA <- NULL
-    ## pCCA
-    if (!is.null(d$Z)) {
-        d$Z <- scale(d$Z, scale = FALSE)
-        Q <- qr(d$Z, tol = 1e-6)
-        HGH <- qr.fitted(Q, t(qr.fitted(Q, G)))
-        pCCA <- list(rank = Q$rank, tot.chi = sum(diag(HGH)),
-                     QR = Q, Fit = HGH,
-                     envcentre = attr(d$Z, "scaled:center"),
-                     G = G)
-        G <- qr.resid(Q, t(qr.resid(Q, G)))
-    }
-    ## CCA
-    if (!is.null(d$Y)) {
-        d$Y <- scale(d$Y, scale = FALSE) 
-        Q <- qr(cbind(d$Z, d$Y), tol = 1e-6)
-        HGH <- qr.fitted(Q, t(qr.fitted(Q, G)))
-        e <- eigen(HGH, symmetric = TRUE)
-        nz <- abs(e$values) > EPS
-        e$values <- e$values[nz]
-        e$vectors <- e$vectors[, nz, drop = FALSE]
-        pos <- e$values > 0
-        if (any(e$values < 0)) {
-            imaginary.u <- e$vectors[, !pos, drop = FALSE]
-            e$vectors <- e$vectors[, pos, drop = FALSE]
-        } else {
-            imaginary.u <- NULL
-        }
-        oo <- Q$pivot[seq_len(Q$rank)]
-        rank <- Q$rank
-        if (!is.null(pCCA)) {
-            oo <- oo[oo > pCCA$rank] - ncol(d$Z)
-            rank <- rank - pCCA$rank
-        }
-        CCA <- list(eig = e$values,
-                    u = e$vectors,
-                    imaginary.u = imaginary.u,
-                    poseig = sum(pos),
-                    v = NA, wa = NA,
-                    alias =  if (rank < ncol(d$Y))
-                                 colnames(d$Y)[-oo],
-                    biplot = cor(d$Y[,oo, drop=FALSE], e$vectors),
-                    qrank = rank, rank = rank,
-                    tot.chi = sum(diag(HGH)),
-                    QR = Q,
-                    envcentre = attr(d$Y, "scaled:center"),
-                    Xbar = NA, G = G)
-        G <- qr.resid(Q, t(qr.resid(Q, G)))
-    }
-    ## CA
-    e <- eigen(G, symmetric = TRUE)
-    nz <- abs(e$values) > EPS
-    e$values <- e$values[nz]
-    e$vectors <- e$vectors[, nz, drop = FALSE]
-    if (any(e$values < 0)) {
-        imaginary.u <- e$vectors[, e$values < 0, drop = FALSE]
-        e$vectors <- e$vectors[, e$values > 0, drop = FALSE]
-    } else {
-        imaginary.u <- NULL
-    }
-    CA <- list(eig = e$values,
-               u = e$vectors,
-               imaginary.u = imaginary.u,
-               poseig = sum(e$values > 0),
-               v = NA,
-               rank = sum(nz),
-               tot.chi = sum(diag(G)),
-               Xbar = NA, G = G)
-    ## output
-    sol <- list(tot.chi = tot.chi, pCCA = pCCA, CCA = CCA, CA = CA)
-    if (!is.null(sol$CCA) && sol$CCA$rank > 0) {
-        colnames(sol$CCA$u) <- 
-            names(sol$CCA$eig) <-
-                paste("dbRDA", seq_len(ncol(sol$CCA$u)), sep = "")
-        colnames(sol$CCA$biplot) <-
-            names(sol$CCA$eig)[sol$CCA$eig > 0]
-        rownames(sol$CCA$u) <- rownames(d$X)
-        if (!is.null(sol$CCA$imaginary.u)) {
-            negax <- sol$CCA$eig < 0
-            negnm <- paste0("idbRDA", seq_len(sum(negax)))
-            names(sol$CCA$eig)[negax] <- negnm
-            colnames(sol$CCA$imaginary.u) <- negnm
-            rownames(sol$CCA$imaginary.u) <- rownames(d$X)
-        }
-    }
-    if (!is.null(sol$CA) && sol$CA$rank > 0) {
-        colnames(sol$CA$u) <- names(sol$CA$eig) <-
-            paste("MDS", seq_len(ncol(sol$CA$u)), sep = "")
-        rownames(sol$CA$u) <- rownames(d$X)
-        if (!is.null(sol$CA$imaginary.u)) {
-            negax <- sol$CA$eig < 0
-            negnm <- paste0("iMDS", seq_len(sum(negax)))
-            names(sol$CA$eig)[negax] <- negnm
-            colnames(sol$CA$imaginary.u) <- negnm
-            rownames(sol$CA$imaginary.u) <- rownames(d$X)
-        }
-    }
+    sol <- ordConstrained(X, d$Y, d$Z, method = "dbrda")
 
     sol$colsum <- NA
-    if (!is.null(sol$CCA) && sol$CCA$rank > 0) 
+    ## separate eigenvectors associated with negative eigenvalues from
+    ## u into imaginary.u
+    if (!is.null(sol$CCA) && sol$CCA$rank > sol$CCA$poseig) {
+        sol$CCA$imaginary.u <- sol$CCA$u[, -seq_len(sol$CCA$poseig),
+                                         drop = FALSE]
+        sol$CCA$u <- sol$CCA$u[, seq_len(sol$CCA$poseig), drop = FALSE]
+    }
+    if (!is.null(sol$CA) && sol$CA$rank > sol$CA$poseig) {
+        sol$CA$imaginary.u <- sol$CA$u[, -seq_len(sol$CA$poseig),
+                                       drop = FALSE]
+        sol$CA$u <- sol$CA$u[, seq_len(sol$CA$poseig), drop = FALSE]
+    }
+    if (!is.null(sol$CCA) && sol$CCA$rank > 0)
         sol$CCA$centroids <-
             centroids.cca(sol$CCA$u, d$modelframe)
-    if (!is.null(sol$CCA$alias)) 
+    if (!is.null(sol$CCA$alias))
         sol$CCA$centroids <- unique(sol$CCA$centroids)
     if (!is.null(sol$CCA$centroids)) {
         rs <- rowSums(sol$CCA$centroids^2)
-        sol$CCA$centroids <- sol$CCA$centroids[rs > 1e-04, , 
+        sol$CCA$centroids <- sol$CCA$centroids[rs > 1e-04, ,
                                                drop = FALSE]
         if (nrow(sol$CCA$centroids) == 0)
             sol$CCA$centroids <- NULL
@@ -199,15 +134,23 @@
     sol$terminfo <- ordiTerminfo(d, data)
     sol$call$formula <- formula(d$terms, width.cutoff = 500)
     sol$call$formula[[2]] <- formula[[2]]
-    sol$method <- "dbrda"
+    sol$sqrt.dist <- sqrt.dist
+    if (!is.na(ac) && ac > 0) {
+        sol$ac <- ac
+        sol$add <- add
+    }
     sol$adjust <- adjust
     sol$inertia <- inertia
     if (metaMDSdist)
         sol$metaMDSdist <- commname
-    sol$subset <- d$subset
-    sol$na.action <- d$na.action
-    class(sol) <- c("dbrda", "rda", "cca")
-    if (!is.null(sol$na.action))
+    if (!is.null(d$subset))
+        sol$subset <- d$subset
+    if (!is.null(d$na.action)) {
+        sol$na.action <- d$na.action
+        ## dbrda cannot add WA scores in na.exclude, and the following
+        ## does nothing except adds residuals.zombie
         sol <- ordiNAexclude(sol, d$excluded)
+    }
+    class(sol) <- c("dbrda", "rda", "cca")
     sol
 }

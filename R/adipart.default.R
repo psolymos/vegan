@@ -1,18 +1,19 @@
-adipart.default <-
-function(y, x, index=c("richness", "shannon", "simpson"),
-    weights=c("unif", "prop"), relative = FALSE, nsimul=99, ...)
+`adipart.default` <-
+    function(y, x, index=c("richness", "shannon", "simpson"),
+             weights=c("unif", "prop"), relative = FALSE, nsimul=99,
+             method = "r2dtable", ...)
 {
     ## evaluate formula
     lhs <- as.matrix(y)
     if (missing(x))
-        x <- cbind(level_1=seq_len(nrow(lhs)), 
+        x <- cbind(level_1=seq_len(nrow(lhs)),
             leve_2=rep(1, nrow(lhs)))
     rhs <- data.frame(x)
     rhs[] <- lapply(rhs, as.factor)
-    rhs[] <- lapply(rhs, droplevels)
+    rhs[] <- lapply(rhs, droplevels, exclude = NA)
     nlevs <- ncol(rhs)
     if (nlevs < 2)
-        stop("provide at least two level hierarchy")
+        stop("provide at least two-level hierarchy")
     if (any(rowSums(lhs) == 0))
         stop("data matrix contains empty rows")
     if (any(lhs < 0))
@@ -45,9 +46,7 @@ function(y, x, index=c("richness", "shannon", "simpson"),
         ftmp[[i]] <- as.formula(paste("~", tlab[i], "- 1"))
     }
 
-    ## is there a method/burnin/thin in ... ?
-    method <- if (is.null(list(...)$method))
-        "r2dtable" else list(...)$method
+    ## is there burnin/thin in ... ?
     burnin <- if (is.null(list(...)$burnin))
         0 else list(...)$burnin
     thin <- if (is.null(list(...)$thin))
@@ -60,7 +59,7 @@ function(y, x, index=c("richness", "shannon", "simpson"),
     weights <- match.arg(weights)
     switch(index,
            "richness" = {
-               divfun <- function(x) apply(x > 0, 1, sum)},
+               divfun <- function(x) rowSums(x > 0)},
            "shannon" = {
                divfun <- function(x) diversity(x, index = "shannon", MARGIN = 1, base=base)},
            "simpson" = {

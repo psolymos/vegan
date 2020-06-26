@@ -13,17 +13,17 @@
 \usage{
 wcmdscale(d, k, eig = FALSE, add = FALSE, x.ret = FALSE, w)
 \method{plot}{wcmdscale}(x, choices = c(1, 2), type = "t", ...)
-\method{scores}{wcmdscale}(x, choices = NA, ...) 
+\method{scores}{wcmdscale}(x, choices = NA, ...)
 }
 \description{
-  Weighted classical multidimensional scaling, 
+  Weighted classical multidimensional scaling,
   also known as weighted \emph{principal coordinates analysis}.
 }
 \arguments{
   \item{d}{a distance structure such as that returned by \code{dist}
     or a full symmetric matrix containing the dissimilarities.}
   \item{k}{the dimension of the space which the data are to be
-    represented in; must be in \eqn{\{1,2,\ldots,n-1\}}{{1,2,\ldots,n-1}}. 
+    represented in; must be in \eqn{\{1,2,\ldots,n-1\}}{{1,2,\ldots,n-1}}.
     If missing, all dimensions with above zero eigenvalue.}
   \item{eig}{indicates whether eigenvalues should be returned.}
   \item{add}{an additive constant \eqn{c} is added to the non-diagonal
@@ -61,7 +61,7 @@ wcmdscale(d, k, eig = FALSE, add = FALSE, x.ret = FALSE, w)
   eigenvalues can be negative. If this disturbs you, this can be
   avoided by adding a constant to non-diagonal dissimilarities making
   all eigenvalues non-negative. The function implements methods
-  discussed by Legndre & Anderson (1999): The method of Lingoes
+  discussed by Legendre & Anderson (1999): The method of Lingoes
   (\code{add="lingoes"}) adds the constant \eqn{c} to squared
   dissimilarities \eqn{d} using \eqn{\sqrt{d^2 + 2 c}}{sqrt(d^2 + 2*c)}
   and the method of Cailliez (\code{add="cailliez"}) to
@@ -72,10 +72,10 @@ wcmdscale(d, k, eig = FALSE, add = FALSE, x.ret = FALSE, w)
 
 \value{ If \code{eig = FALSE} and \code{x.ret = FALSE} (default), a
   matrix with \code{k} columns whose rows give the coordinates of
-  points corresponding to positive eignenvalues.  Otherwise, an object
+  points corresponding to positive eigenvalues.  Otherwise, an object
   of class \code{wcmdscale} containing the components that are mostly
   similar as in \code{\link{cmdscale}}:
-  
+
   \item{points}{a matrix with \code{k} columns whose rows give the
     coordinates of the points chosen to represent the
     dissimilarities.}
@@ -99,9 +99,9 @@ wcmdscale(d, k, eig = FALSE, add = FALSE, x.ret = FALSE, w)
 }
 
 \references{
-  Gower, J. C. (1966)  
-  Some distance properties of latent root and vector 
-  methods used in multivariate analysis.  
+  Gower, J. C. (1966)
+  Some distance properties of latent root and vector
+  methods used in multivariate analysis.
   \emph{Biometrika} \bold{53}, 325--328.
 
   Legendre, P. & Anderson, M. J. (1999). Distance-based redundancy
@@ -133,8 +133,8 @@ ca <- cca(dune)
 ca$CA$eig - ord$eig
 ## Configurations are similar when site scores are scaled by
 ## eigenvalues in CA
-procrustes(ord, ca, choices=1:19, scaling = 1)
-plot(procrustes(ord, ca, choices=1:2, scaling=1))
+procrustes(ord, ca, choices=1:19, scaling = "sites")
+plot(procrustes(ord, ca, choices=1:2, scaling="sites"))
 ## Reconstruction of non-Euclidean distances with negative eigenvalues
 d <- vegdist(dune)
 ord <- wcmdscale(d, eig = TRUE)

@@ -1,6 +1,6 @@
 `renyi` <-
-    function (x, scales = c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 
-                 Inf), hill = FALSE) 
+    function (x, scales = c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64,
+                 Inf), hill = FALSE)
 {
     x <- as.matrix(x)
     n <- nrow(x)
@@ -10,32 +10,21 @@
         n <- nrow(x)
         p <- ncol(x)
     }
-    ## do not make total=1 if not needed (diversity() does anyway,
-    ## species richness does not need)
-    if (!all(scales %in% c(0,1)))
-        x <- sweep(x, 1, rowSums(x), "/")
+    ## scale rows to unit total
+    x <- sweep(x, 1, rowSums(x), "/")
     m <- length(scales)
     result <- array(0, dim = c(n, m))
     dimnames(result) <- list(sites = rownames(x), scale = scales)
     for (a in 1:m) {
-        if (scales[a] != 0 && scales[a] != 1 && scales[a] != 
-            Inf) {
-            result[, a] <- log(apply(x^scales[a], 1, sum))/(1 - 
-                                                            scales[a])
+        result[,a] <-
+            switch(as.character(scales[a]),
+                   "0" = log(rowSums(x > 0)),
+                   "1" = -rowSums(x * log(x), na.rm = TRUE),
+                   "2" = -log(rowSums(x^2)),
+                   "Inf" =  -log(apply(x, 1, max)),
+                   log(rowSums(x^scales[a]))/(1 - scales[a]))
         }
-        else {
-            if (scales[a] == 0) {
-                result[, a] <- log(apply(x > 0, 1, sum))
-            }
-            else if (scales[a] == Inf) {
-                result[, a] <- -log(apply(x, 1, max))
-            }
-            else {
-                result[, a] <- diversity(x)
-            }
-        }
-    }
-    if (hill) 
+    if (hill)
         result <- exp(result)
     if (any(dim(result) == 1))
         result <- drop(result)

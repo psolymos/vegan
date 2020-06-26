@@ -80,8 +80,7 @@ oecosimu(comm, nestfun, method, nsimul = 99, burnin = 0, thin = 1,
     processing. The parallel processing is done with \pkg{parallel}
     package.  If you define a \code{nestfun} in Windows that needs other
     \R packages than \pkg{vegan} or \pkg{permute}, you must set up a
-    socket cluster before the call. See \code{\link{vegandocs}}
-    \code{decision-vegan} for details. }
+    socket cluster before the call. }
   \item{x}{An \code{oecosimu} result object.}
 
   \item{\dots}{Other arguments to functions.}
@@ -216,9 +215,7 @@ oecosimu(comm, nestfun, method, nsimul = 99, burnin = 0, thin = 1,
   The internal structure of the function was radically changed in
   \pkg{vegan 2.2-0} with introduction of \code{\link{commsim}} and
   \code{\link{nullmodel}} and deprecation of
-  \code{\link{commsimulator}}. However, the results and the basic user
-  interface remain the same (except that \code{method = "r0_old"} must
-  be used to reproduce the old results of \code{"method = r0"}).  
+  \code{\link{commsimulator}}.
 }
 
 \seealso{Function \code{oecosimu} currently defines null models with
@@ -228,11 +225,11 @@ oecosimu(comm, nestfun, method, nsimul = 99, burnin = 0, thin = 1,
   \code{oecosimu}, see \code{\link{treedive}} and
   \code{\link{raupcrick}}.
 
-  Function \code{\link[labdsv]{rndtaxa}}
-  (\pkg{labdsv} package) randomizes a community table. See also
-  \code{\link{nestedtemp}} (that also discusses other nestedness
-  functions) and \code{\link{treedive}} for another application. 
+  See also \code{\link{nestedtemp}} (that also discusses other
+  nestedness functions) and \code{\link{treedive}} for another
+  application.
 }
+
 \examples{
 ## Use the first eigenvalue of correspondence analysis as an index
 ## of structure: a model for making your own functions.
@@ -267,6 +264,22 @@ foo <- function(x, n, nr, nc, ...) {
 cf <- commsim("myshuffle", foo, isSeq = FALSE, binary = FALSE, 
    mode = "double")
 oecosimu(dune, meandist, cf)
+
+## Use pre-built null model
+nm <- simulate(nullmodel(sipoo, "curveball"), 99)
+oecosimu(nm, nestedchecker)
+## Several chains of a sequential model -- this can be generalized
+## for parallel processing (see ?smbind)
+nm <- replicate(5, simulate(nullmodel(sipoo, "swap"), 99,
+   thin=10, burnin=100), simplify = FALSE)
+## nm is now a list of nullmodels: use smbind to combine these into one
+## nullmodel with several chains
+nm <- smbind(nm, MARGIN = 3)
+nm
+oecosimu(nm, nestedchecker)
+## After this you can use as.mcmc() and tools in the coda package to
+## analyse the chains (these will show that thin, burnin and nsimul are
+## all too low for real analysis).
 }
 \keyword{ multivariate }
 \keyword{ datagen }

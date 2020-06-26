@@ -1,17 +1,17 @@
 `spenvcor` <-
-    function (object) 
+    function (object)
 {
     if (is.null(object$CCA))
-        stop("Needs results from constrained ordination")
-    if (inherits(object, "dbrda"))
-        stop("cannot be used with 'dbrda'")
+        stop("needs results from constrained ordination")
     u <- object$CCA$u
     wa <- object$CCA$wa
     if (!inherits(object, "rda")) { # is CCA
         r <- sqrt(object$rowsum)
-        u <- sweep(u, 1, r, "*")
-        wa <- sweep(wa, 1, r, "*")
+        u <- r * u
+        wa <- r * wa
     }
-    diag(cor(u, wa))
+    ## because colSums(u*u) = 1, we can simplify diag(cor(u, wa)) --
+    ## and we must for weighted CA
+    colSums(u * wa)/sqrt(colSums(wa^2))
 }
 

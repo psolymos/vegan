@@ -38,24 +38,23 @@ spno <- specnumber(dune)
 ## cca/rda
 m <-  cca(fla, data=df,  na.action=na.exclude,  subset = Use != "Pasture" & spno > 7)
 anova(m, permutations=99)
-## vegan 2.1-40 cannot handle missing data in next two
-##anova(m, by="term", permutations=99)
-##anova(m, by="margin", permutations=99)
+anova(m, by="term", permutations=99) # failed before 2.5-0
+anova(m, by="margin", permutations=99) # works since 2.5-0
 anova(m, by="axis", permutations=99)
+## adonis
+adonis(fla, data = dune.env)
 ## capscale
 p <- capscale(fla, data=df, na.action=na.exclude, subset = Use != "Pasture" & spno > 7)
 anova(p, permutations=99)
-## vegan 2.1-40 cannot handle missing data in next two
-##anova(p, by="term", permutations=99)
-##anova(p, by="margin", permutations=99)
+anova(p, by="term", permutations=99) # failed before 2.5-0
+anova(p, by="margin", permutations=99) # works since 2.5-0
 anova(p, by="axis", permutations=99)
 ## see that capscale can be updated and also works with 'dist' input
 dis <- vegdist(dune)
 p <- update(p, dis ~ .)
 anova(p, permutations=99)
-## vegan 2.1-40 cannot handle missing data in next two
-##anova(p, by="term", permutations=99)
-##anova(p, by="margin", permutations=99)
+anova(p, by="term", permutations=99) # failed before 2.5-0
+anova(p, by="margin", permutations=99) # works since 2.5-0
 anova(p, by="axis", permutations=99)
 ### attach()ed data frame instead of data=
 attach(df)
@@ -63,8 +62,8 @@ q <- cca(fla, na.action = na.omit, subset = Use != "Pasture" & spno > 7)
 anova(q, permutations=99)
 ## commented tests below fail in vegan 2.1-40 because number of
 ## observations changes
-##anova(q, by="term", permutations=99) 
-##anova(q, by="margin", permutations=99)
+anova(q, by="term", permutations=99) # failed before 2.5-0
+anova(q, by="margin", permutations=99) # works since 2.5-0
 anova(q, by="axis", permutations=99)
 ### Check that constrained ordination functions can be embedded.
 ### The data.frame 'df' is still attach()ed.
@@ -77,9 +76,19 @@ foo("cca", dune, Management, na.action = na.omit)
 foo("rda", dune, Management, na.action = na.omit)
 foo("capscale", dune, Management, dist="jaccard", na.action = na.omit)
 foo("capscale", vegdist(dune), Management, na.action = na.omit)
-foo("capscale", dune, Management, na.action = na.omit) ## fails in 2.2-1
-###
+foo("capscale", dune, Management, na.action = na.omit) # fails in 2.2-1
+## adonis must be done with detached 'df' or it will be used instead
+## of with(dune.env, ...)
 detach(df)
+with(dune.env, foo("adonis", dune, Management))
+## the test case reported in github issue #285 by @ktmbiome (reported
+## there for adonis2, but in 2.6-0 this replaced old adonis that
+## became obsolete).
+var <- "Moisture"
+adonis(dune ~ dune.env[, var])
+rm(var)
+###
+
 ### Check that statistics match in partial constrained ordination
 m <- cca(dune ~ A1 + Moisture + Condition(Management), dune.env, subset = A1 > 3)
 tab <- anova(m, by = "axis", permutations = 99)
@@ -158,6 +167,25 @@ out$Poatriv
 rm(foo, out)
 ### end Richard Telford test
 
+### github issue #291 reported that anova(mod, by="margin") gave wrong
+### results in vegan 2.5-2 when 'mod' had only one constraining
+### variable. In such corner case, all the following models should be
+### equal
+
+set.seed(1046)
+z <- runif(20)
+p <- shuffleSet(20, 99)
+mod <- rda(dune ~ z)
+(a0 <- anova(mod, permutations=p))
+(at <- anova(mod, permutations=p, by="term"))
+(am <- anova(mod, permutations=p, by="margin"))
+(aa <- anova(mod, permutations=p, by="axis"))
+(p1 <- permutest(mod, permutations=p, by="onedf"))
+all.equal(permustats(a0)$permutations, permustats(at)$permutations)
+all.equal(permustats(a0)$permutations, permustats(am)$permutations)
+all.equal(permustats(a0)$permutations, permustats(aa)$permutations)
+all.equal(permustats(a0)$permutations, permustats(p1)$permutations)
+rm(z,p,mod,a0,at,am,aa,p1)
 
 ### nestednodf: test case by Daniel Spitale in a comment to News on
 ### the release of vegan 1.17-6 in vegan.r-forge.r-project.org.
@@ -182,7 +210,7 @@ data(dune.env)
 levels(dune.env$Management) <- c(levels(dune.env$Management), "foo")
 ## fit nMDS and envfit
 set.seed(1)
-mod <- metaMDS(dune)
+mod <- metaMDS(dune, trace = 0)
 ef <- envfit(mod, dune.env, permutations = 99)
 plot(mod)
 plot(ef, p.max = 0.1)
@@ -232,7 +260,7 @@ rm(ind, target, mod, dat, d)
 ### originally reported to GLS by Richard Telford
 data(varespec)
 set.seed(1)
-mod <- metaMDS(subset(varespec, select = colSums(varespec) > 0, subset = rowSums(varespec) > 0))
+mod <- metaMDS(subset(varespec, select = colSums(varespec) > 0, subset = rowSums(varespec) > 0), trace=0)
 mod
 rm(mod)
 ### The above should run without error & last lines tests changes to the
@@ -247,16 +275,17 @@ data(varespec, varechem)
 (mc <- capscale(varespec ~ Al + P + Condition(pH), varechem))
 ## the following two should be zero (within 1e-15)
 p <- shuffleSet(nrow(varespec), 999)
-range(permustats(anova(mr, permutations=p))$permutations -
-          permustats(anova(md, permutations=p))$permutations)
-range(permustats(anova(mr, permutations=p))$permutations -
-          permustats(anova(mc, permutations=p))$permutations)
-## the following two should be equal
-d <- vegdist(wisconsin(sqrt(varespec)))
-(md <- dbrda(d ~ Al + P + Condition(pH), varechem))
-(mc <- capscale(d ~ Al + P + Condition(pH), varechem))
-(amd <- anova(md, permutations = p))
-(amc <- anova(mc, permutations = p))
-## should be zero (within 1e-15)
-range(permustats(amd)$permutations - permustats(amc)$permutations)
-rm(mr, md, mc, d, amd, amc)
+all(abs(permustats(anova(mr, permutations=p))$permutations -
+        permustats(anova(md, permutations=p))$permutations)
+             < sqrt(.Machine$double.eps))
+
+all(abs(permustats(anova(mr, permutations=p))$permutations -
+        permustats(anova(mc, permutations=p))$permutations)
+             < sqrt(.Machine$double.eps))
+## eigenvals returns a list now (>= 2.5-0)
+data(varespec, varechem)
+mod <- cca(varespec ~ Al + P + Condition(pH), varechem)
+ev <- summary(eigenvals(mod))
+stopifnot(inherits(ev, "matrix"))
+stopifnot(!is.list(ev))
+ev

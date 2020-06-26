@@ -1,5 +1,6 @@
 `betadisper` <-
-    function(d, group, type = c("median","centroid"), bias.adjust=FALSE)
+    function(d, group, type = c("median","centroid"), bias.adjust=FALSE,
+             sqrt.dist = FALSE, add = FALSE)
 {
     ## inline function for double centring. We used .C("dblcen", ...,
     ## PACKAGE = "stats") which does not dublicate its argument, but
@@ -39,21 +40,37 @@
         rowSums(d^2)
     }
     ## Tolerance for zero Eigenvalues
-    TOL <- 1e-7
+    TOL <- sqrt(.Machine$double.eps)
     ## uses code from stats:::cmdscale by R Core Development Team
     if(!inherits(d, "dist"))
         stop("distances 'd' must be a 'dist' object")
     ## Someone really tried to analyse correlation like object in range -1..+1
     if (any(d < -TOL, na.rm = TRUE))
         stop("dissimilarities 'd' must be non-negative")
+    ## adjust to avoid negative eigenvalues (if they disturb you)
+    if (sqrt.dist)
+        d <- sqrt(d)
+    if (is.logical(add) && isTRUE(add))
+        add <- "lingoes"
+    if (is.character(add)) {
+        add <- match.arg(add, c("lingoes", "cailliez"))
+        if (add == "lingoes") {
+            ac <- addLingoes(as.matrix(d))
+            d <- sqrt(d^2 + 2 * ac)
+        }
+        else if (add == "cailliez") {
+            ac <- addCailliez(as.matrix(d))
+            d <- d + ac
+        }
+    }
     if(missing(type))
         type <- "median"
     type <- match.arg(type)
     ## checks for groups - need to be a factor for later
-    if(!is.factor(group)) {
-        group <- as.factor(group)
+    group <- if(!is.factor(group)) {
+        as.factor(group)
     } else { ## if already a factor, drop empty levels
-        group <- droplevels(group)
+        droplevels(group, exclude = NA) # need exclude = NA under Rdevel r71113
     }
     n <- attr(d, "Size")
     x <- matrix(0, ncol = n, nrow = n)
@@ -68,7 +85,7 @@
         n <- n - sum(gr.na)
         ## update labels
         labs <- labs[!gr.na]
-        warning("missing observations due to 'group' removed")
+        message("missing observations due to 'group' removed")
     }
     ## remove NA's in d
     if(any(x.na <- apply(x, 1, function(x) any(is.na(x))))) {
@@ -78,7 +95,7 @@
         n <- n - sum(x.na)
         ## update labels
         labs <- labs[!x.na]
-        warning("missing observations due to 'd' removed")
+        message("missing observations due to 'd' removed")
     }
     x <- x + t(x)
     x <- dblcen(x)
@@ -86,7 +103,7 @@
     vectors <- e$vectors
     eig <- e$values
     ## Remove zero eigenvalues
-    eig <- eig[(want <- abs(eig/eig[1]) > TOL)]
+    eig <- eig[(want <- abs(eig) > max(TOL, TOL * eig[1L]))]
     ## scale Eigenvectors
     vectors <- vectors[, want, drop = FALSE] %*% diag(sqrt(abs(eig)),
                                nrow = length(eig))
@@ -110,11 +127,20 @@
                            centroids[group, !pos, drop=FALSE])
 
     ## zij are the distances of each point to its group centroid
-    zij <- sqrt(abs(dist.pos - dist.neg))
+    if (any(dist.neg > dist.pos)) {
+        ## Negative squared distances give complex valued distances:
+        ## take only the real part (which is zero). Github issue #306.
+        warning("some squared distances are negative and changed to zero")
+        zij <- Re(sqrt(as.complex(dist.pos - dist.neg)))
+    } else {
+        zij <- sqrt(dist.pos - dist.neg)
+    }
     if (bias.adjust) {
-        n.group <- table(group)
+        n.group <- as.vector(table(group))
         zij <- zij*sqrt(n.group[group]/(n.group[group]-1))
     }
+    ## pre-compute group mean distance to centroid/median for `print` method
+    grp.zij <- tapply(zij, group, "mean")
     ## add in correct labels
     colnames(vectors) <- names(eig) <- paste("PCoA", seq_along(eig), sep = "")
     if(is.matrix(centroids))
@@ -123,7 +149,8 @@
         names(centroids) <- names(eig)
     rownames(vectors) <- names(zij) <- labs
     retval <- list(eig = eig, vectors = vectors, distances = zij,
-                   group = group, centroids = centroids, call = match.call())
+                   group = group, centroids = centroids,
+                   group.distances = grp.zij, call = match.call())
     class(retval) <- "betadisper"
     attr(retval, "method") <- attr(d, "method")
     attr(retval, "type") <- type
